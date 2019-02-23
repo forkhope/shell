@@ -1,0 +1,84 @@
+一. 使用 [ (test) 或者 [[ 进行比较
+Conditional expressions are used by the [[ compound command and the test
+and [ builtin commands to test file attributes and perform string and
+arithmetic comparisons. 其格式为:
+[: [ arg ... ]
+    Evaluate conditional expression. This is a synonym for the "test"
+    builtin, but the last argument must be a literal ']', to match the
+    opening '['. 注意arg和[, ]之间要有空格.由这个描述可知,']'并不是'['命令
+    本身的一部分,而只是这个命令的参数,且要求是最后一个参数. 部分表达式如下:
+-d file: True if file exists and is a directory.
+-e file: True if file exists.
+-f file: Ture if file exists and is a regular file.
+string == string2, string1 = string2: True if the strings are equal.
+string != string2: True if the strings are not equal. 注意,!=两边要有空格.
+str1 < str2: True if the str1 sorts before str2 lexicographically.
+str1 > str2: True if the str1 sorts after str2 lexicographically.
+arg1 OP arg2: OP is one of -eq, -ne, -lt, -le, -gt, or -ge. The arithmetic
+binary operators return true if arg1 is equal to, not equal to, less than,
+less than or equal to, greater than, or greater than or equal to arg2,
+respectively. Arg1 and arg2 may be positive or negative integers.
+
+[[ ... ]]: [[ expr ]]
+    Execute conditional command.
+    Return a status of 0 or 1 depending on the evaluation of the conditional
+    expression expr.此时,']]'是'[['命令本身的一部分,这个'['的形式有所不同.该
+    命令除了支持'['命令的表达式之外,还支持如下的混合表达式:
+    ( EXPR ): Returns the value of EXPR.
+    ! EXPR: True if EXPR is false, else false.
+    EXPR1 && EXPR2: True if both EXTR1 and EXTR2 are true; else false
+    EXPR1 || EXPR2: True if either EXTR1 or EXTR2 are true; else false
+!!注意!!: '['命令不支持上面四个混合表达式.
+
+(1) 在使用 < 和 > 做大小比较,有个关键的地方! Bash中也用 < 和 > 操作符做
+重定向,所以必须用 \< 或 \> 加以转移,否则会看到一些报错信息,如下:
+john:~&if [ "tian" < "xia" ]; then echo tian; else echo xia; fi
+bash: xia: 没有那个文件或目录    # 提示没有xia这个文件
+xia                              # 但是它还是能打印出正确的比较结果.
+john:~$if [ "tian" \< "xia" ]; then echo tian; else echo xia; fi
+tian      # 在这里的 < 符号前面加\进行转义,就不会打印报错信息
+john:~$if [ "tian" '<' "xia" ]; then echo tian; else echo xia; fi
+tian      # 也可以用 '<' 来去掉 < 操作符的特殊含义(重定向),就不会报错.
+(2) 比较两个整数是否相等,可以采用下面两种方式:
+(3) 如上所述, !=, ==, <, > 这几个操作符都是针对字符串的,要对其他数据类型
+进行比较时,要用 -eq, -ne, -gt 等操作符.由于Bash中数据类型检查并不严格,甚至
+会自动进行类型转换,实际上也是可以使用 != 来比较两个整数的.如下:
+john:~$i=4; j=5
+john:~$if [ $i -ne $j ]; then echo "not equal"; fi
+not equal
+john:~$if [ "$i" != "$j" ]; then echo "not equal"; fi
+not equal
+john:~$if [ $i != $j ]; then echo "not equal"; fi
+not equal
+john:~$if [ 3 != 4 ]; then echo "not equal"; fi
+not equal
+(4) 要在 if 语句中进行多次比较时,要使用'[[',而不能使用'['.如下:
+$ if [ 4 -ne 1 && 4 -ne 3 ]; then echo aaa ; else echo bbb; fi
+-bash: [: missing `]'   # 可以看到,使用'['来进行"&&"与操作时,报错,且打印的
+bbb      # 结果也不对.这里本来应该打印出"aaa",却打印了"bbb"
+$ if [[ 4 -ne 1 && 4 -ne 3 ]]; then echo aaa ; else echo bbb; fi
+aaa      # 而使用 '[[' 来进行 "&&" 与操作时,不会报错,且执行结果正确.
+
+二. 与, 或, 非逻辑判断
+Expressions may be combined using the following operators, listed in
+decreasing order of precedence. The evaluation depends on the number of
+arguments;
+!expr:  True if expr is false;
+( expr ): Returns the value of expr, This may be used to override the normal
+         precedence of operators. 注意:实际上要写为\( expr \)或者\(expr\).
+         Bash中,()默认用来启动一个子shell执行里面的代码,不加转义字符的话,就
+         会报错:bash: 未预期的符号 `"3"' 附近有语法错误. 下面有一个例子.
+expr1 -a expr2: True if both expr1 and exprt2 are true.
+expr1 -o expr2: True if either expr1 or expr2 is true.
+(1) 下面使用 expr 命令来举几个例子. expr: evaluate expressions.
+john:~$expr ( "3" != "2" )   # 没有加转义字符时, 这种写法报错
+bash: 未预期的符号 `"3"' 附近有语法错误
+john:~$expr \( "3" != "2" \) # 加了转义字符,正常执行,判断出表达式为假
+1
+john:~$expr \("3" != "2"\)   # 表达式和小括号()之间可以没有空格
+1
+john:~$expr \( "3"!="2" \)   # 当 != 的两边都没有空格时,整个表达式被
+3!=2                         # 当成了字符串
+john:~$expr \("3" !="2"\)    # 当 != 的某一边没有空格时,会报错.如果
+expr: 语法错误               # 写为 expr \("3"!= "2"\) 也会报同样的错.
+

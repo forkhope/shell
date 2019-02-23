@@ -1,0 +1,289 @@
+描述Bash中重定向的使用
+查看"man bash"手册,里面有个"REDIRECTION"小节就用于描述"重定向"操作符.如下:
+一. 文件描述符: 用于指定被重定向的文件描述符,对应一个已经打开的文件.
+Each redirection that may be preceded by a file descriptor number may
+instead be preceded by a word of the form {varname}. In this case, for each
+redirection operator except >&- and <&-, the shell will allocate a file
+descriptor greater than 10 and assign it to varname. If >&- or <&- is
+preceded by {varname}, the value of varname defines the file descriptor to
+close. In the following descriptions, if the file descriptor number is
+omitted, and the first character of the redirection operator is <, the
+redirection refers to the standard input (file descriptor 0). If the first
+character of the redirection operator is >, the redirection refers to the
+standard output (file descriptor 1).
+
+实际上,重定向关联了两个文件.例如下面说到的 "n<word" 就表示读取word所对应那
+个文件的内容写入到 文件描述符n 对应的那个文件上.如果省略了"n",则默认使用标
+准输入的文件描述符0.而 "n>word" 表示将 文件描述符n 的内容写入到word所对应的
+那个文件上.如果省略了 "n",则默认使用标准输出的文件描述符1.
+
+Bash默认会打开三个文件描述符: 0, 1, 和 2.
+0: 表示标准输入,对应 "/dev/fd/0" 和 "/dev/stdin" 文件.
+1: 表示标准输出,对应 "/dev/fd/1" 和 "/dev/stdout" 文件.
+2: 表示标准错误输出,对应 "/dev/fd/2" 和 "/dev/stderr" 文件.
+
+二. 重定向的先后顺序: 这个很重要.
+Redirections are processed in the order they appear, from left to right.
+Note that the order of redirection is significant. For example, the command
+    ls > dirlist 2>&1
+directs both standard output and standard error to the file dirlist, while
+the command
+    ls 2>&1 > dirlist
+directs only the standard output to file dirlist, because the standard
+error was duplicated from the standard output before the standard output
+was redirected to dirlist.
+
+三. exec内置命令和重定向
+Note that the exec builtin command can make redirections take effect in
+the current shell. "man bash"中对该命令的部分描述如下:
+exec [-cl] [-a name] [command [arguments]]
+  If command is specified, it replaces the shell. No new process is created.
+  The arguments become the arguments to command. !!NOTE!! If command is not
+  specified, any redirections take effect in the current shell, and the re-
+  turn status is 0. If there is a redirection error, the return status is 1.
+下面的例子演示了如何使用exec命令来进行重定向:
+------------------- 重定向标准输出 ---------------------------------
+$exec 1>output.txt      # 将标准输出重定向到output.txt文件.
+$ls   # 指定ls命令,此时终端上看不到任何输出.ls命令的结果被写入了output.txt
+$cat output.txt         # 在当前终端用cat命令查看output.txt的内容,会报错.
+cat: output.txt：输入文件是输出文件
+此时另外打开一个终端,用cat命令查看output.txt的内容,就能看到刚才ls命令的输出.
+如果想恢复标准输出到当前终端上,可以执行下面的命令来进行重定向:
+$exec 1>/dev/stdin      # /dev/stdin设备关联到终端,这个命令会重新将标准输出
+$ls                     # 关联到终端上.此时再执行 ls 命令,终端上就有输出了.
+a.sh  output.txt  test.sh
+------------------- 重定向标准输入 ---------------------------------
+$cat input.txt          # 查看 input.txt 文件的内容
+date                    # 里面有一个"date"命令和一个"sleep 5"命令.这个sleep
+sleep 5                 # 命令用于延缓终端的退出,否则终端会一闪而过.
+$exec 0<input.txt       # 下面将input.txt文件重定向为标准输入,则终端开始读
+$date                   # 取该文件的内容并执行,所以下面看到了date命令以及
+2014年 04月 30日 星期三 14:37:01 CST      # 这个命令的执行结果.
+执行完date命令后,会再执行"sleep 5"命令,等待5秒之后,终端就会退出.这是因为终
+端有个特性:遇到EOF就会退出.例如打开一个终端,然后直接输入Ctrl-D,这个终端就会
+关闭.当终端读取完 input.txt 文件的内容后,就会遇到EOF,所以终端才会退出.
+
+四. 重定向输入: Redirecting Input
+Redirection of input causes the file whose name results from the expansion
+of word to be opened for reading on file descriptor n, or the standard
+input (file descriptor 0) if n is not specified.
+The general format for redirecting input is: [n]<word. 举例如下:
+$cat < input.txt    # 当cat命令不带任何参数时,就是读取标准输入.这里使用
+date                # '< input.txt'将input.txt文件重定向到标准输入,则cat
+sleep 5             # 读取标准输入时,读取的就是input.txt文件的内容.
+$exec 3<input.txt   # 将input.txt文件重定向到文件描述符3.此时,读取文件描述
+$cat /dev/fd/3      # 符3,读取的就是input.txt文件的内容.可以看到,/dev/fd/3
+date                # 的内容确实和input.txt文件的内容一致.
+sleep 5
+$read -u 3 line     # 使用read命令的"-u"选项指定从文件描述符3读取读入一行,
+$echo $line         # 同样的,读取的内容就是input.txt文件的第一行.
+date
+
+五. 重定向输出: Redirecting Output
+Redirection of output causes the file whose name results from the expansion
+of word to be opened for writing on file descriptor n, or the standard
+output (file descriptor 1) if n is not specified. If the file does not
+exist it is created; if it does exist it is truncated to zero size.
+The general format for redirecting output is: [n]>word. 举例如下:
+$echo "redirection output" > output.txt     # 将标准输出重定向到output.txt
+$cat output.txt     # 文件里面.然后输出该文件的内容,就能看到刚才写入的
+redirection output  # 字符串.这是在重定向标准输出时,最普遍的用法之一.
+$exec 12>output.txt             # 上面演示了将标准输出重定向到output.txt
+$cat input.txt > /dev/fd/12     # 文件,这里将文件描述符12的输出重定向到
+$cat output.txt                 # output.txt上,然后将 input.txt 的内容写入
+date                            # 到文件描述符12(/dev/fd/12文件),再查看
+sleep 5                         # output.txt的内容,和input.txt的内容一致.
+
+六. 追加重定向输出: Appending Redirected Output
+Redirection of output in this fashion causes the file whose name results
+from the expansion of word to be opened for appending on file descriptor n,
+or the standard output (file descriptor 1) if n is not specified. If the
+file does not exist it is created.
+The general format for appending output is: [n]>>word. 举例如下:
+$cat output.txt                 # 查看 output.txt 文件的内容
+test
+$echo "again" >> output.txt     # 使用 ">>" 进行追加重定向
+$cat output.txt                 # 再次查看 output.txt 文件的内容
+test                            # 可以看到,原来的内容还在,并追加了
+again                           # 刚才输入的 "again" 字符串.
+当重定向的输出文件都不存在时, ">" 和 ">>" 都会新建该文件.当输出文件已经存
+在时, ">" 会清空该文件的内容,然后再写入新的内容(如果有的话).而 ">>" 会将新
+写入的内容追加到该文件的末尾,文件原来的内容还会保留.
+
+七. 同时重定向标准输出和标准错误输出: Redirecting Standard Output and
+Standard Error: This construct allows both the standard output (file
+descriptor 1) and the standard error output (file descriptor 2) to be
+redirected to the file whose name is the expansion of word.
+There are two formats for redirecting standard output and standard error:
+"&>word" and ">&word". Of the two forms, the first is preferred. This is
+semantically equivalent to ">word 2>&1". 也就是说, "&>word" 提供了一个简单
+的写法来同时重定向标准输出和标准错误输出.
+如果使用了">"或者">>"来重定向标准输出后,还是有部分数据打印到了终端上.此时,
+这些数据应该就是被打印到了标准错误输出,如果想将它们也重定向到文件上,就可以
+使用"&>word"这种写法.当然,也可以写为">word 2>&1"的形式.
+
+八. 同时追加重定向标准输出和标准错误输出:
+Appending Standard Output and Standard Error: This construct allows both
+the standard output (file descriptor 1) and the standard error output (file
+descriptor 2) to the appended to the file whose name is the expansion of
+word. The format for appending standard output and standard error is:
+"&>>word". This is semantically equivalent to ">>word 2>&1".
+
+九. Here Documents
+This type of redirection instructs the shell to read input from the current
+source until a line containing only delimiter (with no trailing blanks) is
+seen. All of the lines read up to that point are then used as the standard
+input for a command. The format of here-documents is:
+    <<[-]word
+        here-document
+    delimiter
+No parameter expansion, command substitution, arithmetic expansion, or
+pathname expansion is performed on word. If any characters in word are
+quoted, the delimiter is the result of quote removal on word, and the lines
+in the here-document are not expanded. If word is unquoted, all lines of the
+here-document are subjected to parameter expansion, command substitution,
+and arithmetic expansion. In the latter case, the character sequence
+\<newline> is ignored, and \ must be used to quote the characters \, $, and
+`(这个是跟波浪号~同一个按键的那个反引号`,而不是单引号').
+If the redirection operator is <<-, then all leading tab characters are
+stripped from input lines and the line containing delimiter. This allows
+here-documents within shell scripts to be indented in a natural fashion.
+即,在here-documents的格式中, "word"指定了一个词,然后在后续读取到的内容中,当
+某行的内容完全等于该词时(空白字符也会被用来比较),整个读取就结束. 举例如下:
+$cat <<eof      # 使用here-documents类型的重定向,并指定结束符为eof.
+> tian xia      # 此时,输出的内容将作为cat命令的标准输入
+>  eof          # 这里虽然输入了"eof",但是前面还有一个空格,不完全匹配,没有
+> eof           # 结束输入.这里实际输入的是"eof ",也是多了一个空格,没有完全
+> eof           # 匹配.这里输入了"eof",完全匹配上面提供的单词,输入因此结束/
+tian xia        # 然后cat命令开始输出刚才读取到的内容.
+ eof
+eof             # 这里的"eof"后面会有一个空格,也就是"eof "的形式.
+
+如上所述,如果 "<<word" 的 word 没有用引号括起来,则here-document中的内容会进
+行Bash的参数替换,命令替换,和算术替换.但不会进行路径替换. 举例如下:
+$name="apple"           # 先为一个shell变量 "name" 赋值为 "apple".
+$cat <<eof              # 进行 here-documents类型的重定向,结束符为eof.
+> what is the name?     # 输入普通的文本字符串
+> ${name}               # 进行Bash的参数替换
+> ~                     # 试图进行Bash的路径替换
+> $((3+4))              # 进行Bash的算术替换
+> `uname`               # 进行Bash的命令替换.这里的`是指ESC键下面的反引号
+> $(date)               # 使用$()的方式进行Bash的命令替换
+> eof                   # 输入 here-documents 重定向的结束符,结束输入.
+what is the name?       # 这个普通的文本会照常输出.
+apple                   # 上面输入的 ${name} 被替换成了name这个变量的值
+~                       # 这里没有进行路径替换,还是继续输出波浪号'~'.
+7                       # 上面的 $((3+4)) 被进行了算术替换,得到7.
+Linux                   # 上面的 `uname` 进行命令替换后,输出"Linux"字符串.
+2014年 04月 30日 星期三 16:49:50 CST    # 类似的,这是date命令的执行结果.
+
+当 "<<word" 中的 word 被引号括起来时,here-document中的内容将不再进行替换:
+$cat <<"eof"            # 使用"eof"作为here-documents的结束符.此时,输入的
+> ${name}               # 结束符还是eof,不需要带有双引号.但是,将不再进行
+> eof                   # 参数替换(以及其他替换).
+${name}                 # 输入${name},输出还是${name},不做任何替换.
+$cat <<'eof'            # 这里使用单引号和双引号是同样的效果.
+> ${name}
+> eof
+${name}
+
+在 "<<word" 中, word 本身不进行任何的Bash替换,保持输入的字符串不变:
+$cat <<${name}          # 将 word 写为 ${name} 的形式
+> what is the name?
+> $name                 # 由于上面的word没有加引号,还是会进行参数替换
+> ${name}               # 但是这个将不会替换,而是结束了整个输入.
+what is the name?
+apple                   # 这是上面$name的替换结果.
+
+!! NOTE !!: Here-documents 重定向了命令的标准输入, word之后, delimiter之前
+的内容会被当作命令的标准输入. 假设有一个 test.sh 脚本内容如下:
+$cat test.sh            # 查看 test.sh 脚本的内容
+#!/bin/bash
+cat << EOF              # 这个命令将会重定向 cat 命令的标准输入.有些类似于
+tian                    # 执行"cat < a.sh"命令,只不过"cat a.sh"命令是将a.sh
+xia                     # 文件本身的内容作为输入.而"cat << EOF"是将后面的内
+this is the input       # 容作为输入,直到遇到delimiter(这里是EOF)为止.
+EOF
+$./test.sh              # 执行 test.sh 脚本.可以看到脚本中在"<< EOF"和"EOF"
+tian                    # 之间的内容就打印出来了.即,这些内容就作为了cat命令
+xia                     # 的输入.此时,不会再从终端获取输入.这和上面的例子有
+this is the input       # 所不同,上面例子是通过终端给cat命令提供输入.
+也就是说,在脚本中使用Here-documents可以起到预置输入的效果.
+
+十. Here Strings:
+A variant of here documents, the format is: <<<word. The word is expanded
+and supplied to the command on its standard input. 举例如下:
+$grep a <<<"apple"      # 将"apple"这个字符串作为grep命令的输入.这里可以加
+apple                   # 引号,也可以不加引号,直接写为"<<<apple"也可以.
+# 实际上,重定向是针对文件而言,如下面的报错可知,Bash试图打开一个名为"apple"
+# 的文件来作为grep命令的标准输入,但是找不到这个文件.
+$grep a < "apple"       # 这个写法会报错,提示找不到名为"apple"的文件.
+bash: apple: 没有那个文件或目录
+$grep a << "apple"      # 如果写成这种形式,就变成了here-documents.
+> tian                  # Bash不会试图去打开一个名为"apple"的文件,
+> xia                   # 而是直接读取用户的输入,遇到只包含apple的
+> apple                 # 行则结束输入,并将前面输入的内容作为grep
+tian                    # 命令的标准输入.
+xia
+
+十一. 复制文件描述符: Duplicating File Descriptors (dup()系统调用函数)
+The redirection operator "[n]<&word" is used to duplicate input file
+descriptors. If word expands to one or more digits, the file descriptor
+denoted by n is made to be a copy of that file descriptor. If the digits
+in word do not specify a file descriptor open for input, a redirection
+error occurs. If word evaluates to -, file descriptor n is closed. If n is
+not specified, the standard input (file descriptor 0) is used.
+
+The operator "[n]>&word" is used similarly to duplicate output file
+descriptors. If n is not specified, the standard output (file descriptor 1)
+is used. If the digits in word do not specify a file descriptor open for
+output, a redirection error occurs. As a special case, if n is omitted, and
+word does not expand to one or more digits, the standard output and
+standard error are redirected as described previously.
+当把标准错误输出和标准输出都重定向到同一个文件时,就会用到这种写法.例如上面
+提到的"ls > dirlist 2>&1".这条语句首先将标准输出重定向到dirlist,再将标准错
+误输出(文件描述符2)复制到标准输出(文件描述符1)上,则标准错误输出也会重定向
+到dirlist上.这类似于Linux系统调用函数dup()的概念.这两个文件描述符会指向同
+一个文件表(file table),共享文件偏移指针,所以它们写入的内容是交错开的,不会
+发生覆盖的现象.举例如下:
+$cat test.sh                # 当前目录下有一个test.sh脚本,其内容如下:
+#!/bin/bash
+date                        # Bash支持date这个命令
+foo                         # 当前的Bash中,没有"foo"这个命令,执行它会报错
+$./test.sh                  # 执行 test.sh 脚本
+2014年 05月 04日 星期日 09:26:26 CST    # 这是 date 命令的执行结果
+./test.sh:行3: foo: 未找到命令          # Bash试图执行"foo"命令时,报错
+$./test.sh > output.txt     # 执行test.sh脚本并将标准输出重定向到output.txt
+./test.sh:行3: foo: 未找到命令          # 此时终端上只看到这个报错信息
+$./test.sh > output.txt 2>&1            # 将标准错误输出也进行重定向
+$cat output.txt                         # 查看output.txt的内容.可以看到,标
+2014年 05月 04日 星期日 09:26:38 CST    # 准输出和标准错误输出的内容是错开
+./test.sh:行3: foo: 未找到命令          # 的,不会发生相互覆盖的现象.
+另外,这种写法可以在管道中重定向标准错误输出.当使用'|'来重定向前一个命令的
+输出到后一个命令时,只会重定向标准输出,不会重定向标准错误输出.如果想重定向
+标准错误输出,可以写为'2>&1 |'.这种写法会先将标准错误输出重定向到标准输出上,
+然后再一起输出到管道上.实际上,更简单的写法是'|&'.'man bash'的'Pipelines'小
+节提到了这一点,描述如下:
+If |& is used, the standard error of command is connected to command2's
+standard input through the pipe; it is shorthand for 2>&1 |. This implicit
+redirection of the standard error is performed after any redirections
+specified by the command.
+
+十二. 移动文件描述符: Moving File Descriptors
+The redirection operator "[n]<&digit-" moves the file descriptor digit to
+file descriptor n, or the standard input (file descriptor 0) if n is not
+specified. digit is closed after being duplicated to n.
+Similarly, the redirection operator "[n]>&digit-" moves the file descriptor
+digit to file descriptor n, or the standard output (file descriptor 1) if n
+is not specified.
+注意: 这和Linux系统调用函数dup2()有所区别. dup2()函数将老的文件描述符(称之
+为oldfd)复制到新的文件描述符(称之为newfd),如果newfd之前是打开的,会先关闭,但
+是这个函数不会关闭oldfd.而Bash中的"[n]<&digit-"和"[n]>&digit-"会在复制之后
+关闭digit对应的那个文件描述符.
+另外,如第十一点"复制文件描述符"所述,当digit省略时,会关闭n对应的文件描述符.
+
+十三. Opening File Descriptors for Reading and Writing
+The redirection operator "[n]<>word" causes the file whose name is the
+expansion of word to be opened for both reading and writing on file
+descriptor n, or on file descriptor 0 if n is not specified. If the file
+does not exist, it is created.

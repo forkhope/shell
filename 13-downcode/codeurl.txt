@@ -1,0 +1,2 @@
+cs-a13-4.0^ssh://server@192.168.1.95/home/server/test_Git/manifest.git -m android_a13.xml^ssh://server@192.168.1.95/home/server/test_Git/manifest.git -m lichee_a13.xml
+cs-a13-4.2^ssh://server@192.168.1.95/home/server/test_Git/manifest.git -m  android_a13-4.2.xml^ssh://server@192.168.1.95/home/server/test_Git/manifest.git -m lichee_a13-4.2.xml

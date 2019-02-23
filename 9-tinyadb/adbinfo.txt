@@ -1,0 +1,23 @@
+b|bugreport
+l|logcat -v time
+lr|logcat -b radio -v time
+lra|logcat -b radio -s AT use-Rlog/RLOG-AT -v time
+lp|logcat -s pppd -v time
+d|dmesg
+dk|cat /proc/kmsg
+dp|dmesg | grep sw_module
+g|getprop
+gg|getprop | grep -i gsm
+p|ps
+pg|ps gsm
+pr|ps rild
+pp|ps pppd
+r|reboot
+s|service list
+st|service list | grep -i telephony
+t|ls /dev/ttyUSB*
+tm|ls /dev/mux*
+ts|ls /dev/ttyS*
+xo|lsmod
+xe|getevent
+png|screencap /sdcard/screen.png

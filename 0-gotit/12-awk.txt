@@ -1,0 +1,8 @@
+描述 awk 命令的使用
+
+一. 按特定字符分割行并打印
+awk默认的分割字符是空格' ',例如 awk '{print $2}' filename 将会把filename
+里面的行按空格分开,并打印出第二列的内容. 可以使用 -F 选项来指定分割字符:
+    -F value: sets the field separator, FS, to value.
+例如 awk -F '-' '{print $2}' filename 将会把filename里面的行按'-'字符分成
+多列,并打印第二列的内容.另外,可以使用 '{print $NF}' 打印分割后的最后一列.

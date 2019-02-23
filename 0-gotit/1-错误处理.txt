@@ -1,0 +1,4 @@
+一. set -e命令
+在bash下,使用help set命令,可以看到set命令的帮助信息,里面有个-e选项:
+-e  Exit immediately if a command exits with a non-zero status.
+即,执行set -e后,脚本执行过程中遇到的任何错误都会终止脚本,相当暴力.

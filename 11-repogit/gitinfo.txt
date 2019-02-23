@@ -1,0 +1,32 @@
+a|git add -A .
+ac|git_add_commit
+af|git add -A
+c|git commit -m
+s|git status
+sd|git status .
+b|git branch
+br|git branch -r
+d|git diff
+dd|git diff .
+l|git log
+la|git log --name-status --author=john@ococci.com
+lg|git_log_grep
+ln|git log --name-status
+l1|git log --name-status -1
+lnd|git log --name-status .
+lp|git log -p
+lpd|git log -p .
+lp1|git log -p -1
+p|git pull
+ps|git push
+ap|git_apply
+rl|repo forall -p -c git log
+rln|repo forall -p -c git log --name-status
+rlg|repo_log_grep
+rla|repo forall -p -c git log --name-status --author=john@ococci.com
+rl1|repo forall -p -c git log --name-status -1
+rla1|repo forall -p -c git log --name-status --author=john@ococci.com -1
+rp|repo_pull
+rph|repo_push
+rs|repo_status
+rb|repo branch

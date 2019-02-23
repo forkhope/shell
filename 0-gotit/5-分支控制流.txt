@@ -1,0 +1,152 @@
+一. select 语句
+查看man bash手册,里面对 select 语句的描述如下:
+select name [ in word ] ; do list ; done
+    The list of words following "in" is expanded, generating a list of
+    items. The set of expanded words is printed on the standard error, each
+    preceded by a number. If the "in word" is omitted, the positional
+    parameters are printed. The PS3 prompt is then displayed and a line
+    read from the standard input. If the line consists of a number
+    corresponding to one of the displayed words, then the value of name is
+    set to that word. If the line is empty, the words and prompt are
+    displayed again. If EOF is read, the command completes. Any other value
+    read causes name to be set to null. The line read is saved in the
+    virable REPLY. The list is executed after each selection until a break
+    command is executed. The exit status of select is the exit status of the
+    list command executed in list, or zero if no commands were executed.
+    注意,上面的 [ in word ]是表示"in word"可选,这里的[]并不是Bash里面的估值
+    条件表达式. Bash的估值条件表达式的格式是:[ 参数... ],看着很像,注意区分.
+注意: (1)这里的word用空格隔开,不要加双引号,加了双引号会被当作一个单词.
+(2)当输入EOF时,select会退出,此时,变量name的值保持之前的值不变,而不是设为空.
+select name in phone pppd adb; do
+    echo $name
+done
+echo "select end: $name"
+执行上述语句的结果为:
+john:~/source/test$./test.sh 
+1) phone
+2) pppd
+3) adb
+#? 3
+adb
+#? 9
+            #### 上面输入了 9,该值不在选择列表里面,所以name的是空
+#? 
+end:        #### 上面输入了EOF,select退出,此时name的值保持不变,还是空
+john:~/source/test$./test.sh 
+1) phone
+2) pppd
+3) adb
+#? 1
+phone       #### 上面输入了 1,此时, name的值被设成 phone
+#? 
+end: phone  #### 上面输入了EOF,select退出,此时name的值保持不变,是phone
+---------------------
+john:~/source/test$select name in "phoen adb pppd"; do
+> echo $name
+> done
+1) phoen adb pppd
+#? 1
+phoen adb pppd
+可以看到,当word用双引号括起来时,它整个被当成了一个选项.
+
+二. while和until 语句
+查看man bash手册,里面对 while和until 语句的描述如下:
+while list-1; do list-2; done
+until list-1; do list-2; done
+    The while command continuously executes the list list-2 as long as the
+    last command in the list list-1 returns an exit status of zero. The
+    until command is identical to the while command, except that the test
+    is negated; list-2 is executed as long as the last command in list-1
+    returns a non-zero exit status. The exit status of the while and until
+    commands is the exit status of the last command executed in list-2, or
+    zero if none was executed.
+即,while语句会先判断list-1是否为0,如果不为0,就不会执行里面的list-2语句.而
+until语句会先判断list-1是否为0,如果为0,就不会执行里面的list-2语句.
+如果要写类似于C语言 while (--count >= 0) 的循环,可以采用如下的形式:
+count=3
+while [ $((--count)) -ge 0 ]; do list-2; done
+实际上就是用 [ 命令来得到一个表达式的值,然后再由while来判断该值,以决定是否
+要执行while循环体,关键就在于 [ 命令的使用上.
+
+三. case 语句
+查看man bash手册,里面对 case 语句的部分描述如下:
+case word in [ [(] pattern [ | pattern ] ... ) list ;; ] ... esac
+    A case command first expands word, and tries to match it against each
+    pattern in turn The word is expanded using tilde expansion, parameter
+    and variable expansion, arithmetic substitution, command substitution,
+    process substitution and quote removal. Each pattern examined is
+    expanded using tilde expansion, parameter and variable expansion,
+    arithmetic substitution, command substitution, and process substitution.
+    When a match is found, the corresponding list is executed. If the ;;
+    operator is used, no subsequent matches are attempted after the first
+    pattern match. Using ;& in place of ;; causes execution to continue
+    with the list associated with the next set of patterns. Using ;;& in
+    place of ;; causes the shell to test the next pattern list in the
+    statement, if any, and execute any associated list on a successful
+    match. The exit status is zero if no pattern matches. Otherwise, it is
+    the exit status of the last command executed in list. 一个例子如下:
+while getopts "123456" num; do
+    case ${num} in
+# 注意,当匹配多个模块时,要写成下面的形式,而不是写为 1) | 2) | 3),这样写
+# 会报错.而且, ";;" 必不可少,省略的话也是会报错.查看上面的case语句格式,
+# 也可以看到";;"并没有被方括号[]括起来,也说明了它确实不可省略.但是可以
+# 使用";&"或者";;&"来代替它.即,每个模式后面,要有";;",或者";&",或者";;&".
+    1 | 2 | 3)
+        echo number is ${num} ;;
+    4)
+# 当使用 ";;" 时,第一次匹配到之后,就停止匹配,case语句执行结束. 所以当${num}
+# 的值是4时,虽然下面的 $[8/2] 也匹配该值,但它不会被执行.
+        echo !!! 4 !!!  ;;
+# 如上所述,case所匹配的模式pattern会被扩展,如波浪号(tilde)扩展,算术扩展等.
+    $((8/2)))
+        echo !!! 8/2 !!! ;;
+    5)
+# 当使用 ";&" 时,它会继续执行它下一个模式的list语句,即使下一个模式并不匹配
+# 当前所给的值,类似于C语言case分支不写break语句的情况, fall through.
+        echo ~~~ 5 ~~~ ;&
+    9527)
+# 这里写为 ";&", 将会继续执行下一个模式的list语句.
+        echo ~~~ 9527 ~~~ ;&
+    0824)
+# 这里写为 ";;", 将停止执行下一个模式的list语句.
+        echo ~~~ 0824 ~~~ ;;
+# 这些写为 ";;&", 将会对下一个模式进行匹配,如果匹配,就执行它的list语句.
+    6)
+        echo --- 6 --- ;;&
+    $((12/2)))
+# 如果没有下一个模式了,就不会去匹配下一个模式,整个case语句执行结束.
+        echo --- 12/2 --- ;;&
+    *)
+# 可以使用 '*' 来匹配其他任意分支,类似于默认分支序列.
+        echo --- default(*) --- ;;
+    esac
+done
+
+四. for 语句
+Bash中, for 语句有两种格式, man bash手册对此分别描述如下:
+(1) for name [ [ in [ word ... ] ] ; ] do list ; done
+    The list of words following in is expanded, generating a list of items.
+    The variable name is set to each element of this list in turn, and list
+    is executed each time. If the in word is omitted, the for command
+    executes list once for each positional parameter that is set. The return
+    status is the exit status of the last command that executes. If the
+    expansion of the items following in results in an empty list, no
+    commands are executed, and the return status is 0. 几个例子如下:
+for arg in $@; do echo $arg; done: 打印脚本或者函数的所有位置参数(除了$0).
+按照上面的说法,此时"in $@"是可以省略的,即写为: for arg; do echo $arg; done
+for i in tian xia you qing ren; do echo -n $i,; done
+这个语句将会打印出tian,xia,you,qing,ren,  即挨个遍历后面的词组.此时,和case
+语句类似, in 后面的词组不能加双引号,加了双引号,就会被认为是一个词.
+(2) for (( expr1 ; expr2 ; expr3 )) ; do list ; done
+    First, the arithmetic expression expr1 is evaluated according to the
+    rules described below under ARITHMETIC EVALUATION. The arithmetic
+    expression expr2 is then evaluated repeatedly until it evaluates to
+    zero. Each time expr2 evaluates to a non-zero value, list is executed
+    and the arithmetic expression expr3 is evaluated. If any expression is
+    omitted, it behaves as if it evaluates to 1. The return value is the
+    exit status of the last command in list that is executed, or false if
+    any of the expres‐sions is invalid.
+这种写法跟C语言的for循环写法几乎一样,只不过这里用了两个小括号而已.例如:
+for ((i = 0; i < 10; ++i)); do echo $i; done 或者
+MAX=10; for ((i = 0; i < MAX; ++i)); do echo $i; done 此时,在那两个小括号
+里面的MAX变量可以不加$符号,当然写成 $MAX 也是可以的,建议写为$MAX,保持一致.

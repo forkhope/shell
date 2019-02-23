@@ -1,0 +1,107 @@
+一. 用 read 命令读取一行输入
+read [-ers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars]
+     [-p prompt] [-t timeout] [-u fd] [name ...]
+One line is read from the standard input, or from the file descriptor fd
+supplied as an argument to the -u option, and the first word is assigned
+to the first name, the second word to the second name, and so on, with
+leftover words and their intervening sperators assinged to the last name.
+If there are fewer words read from the input stream than names, the
+remaining names are assigned empty values. The characters in IFS are used
+to split the line into words.
+If no names are supplied, the line read is assinged to the variable REPLY.
+The return code is zero, unless end-of-file is encountered, read times out
+(in which case the return code is greater than 128), or an invalid file
+descriptor is supplied as the argument to -u. 一个执行的例子如下:
+john:~$read name; echo $name
+tian xia you qing ren
+tian xia you qing ren
+# 当read提供多个name变量时,输入行会按照IFS分割成多个词,并把这些词逐个赋值
+# 给name变量,如果name变量个数少于分割的单词数时,最后一个name变量保存剩余
+# 的单词.如下,可知 $name3 的值是 "you qing ren".
+john:~$read name1 name2 name3; echo $name1, $name2, $name3
+tian xia you qing ren
+tian, xia, you qing ren
+john:~$read name1 name2 name3; echo $name1 -- $name2
+tian xia you qing ren
+tian -- xia             # 可以看到, $name1的值是tian, $name2的值是xia.
+(1)可以使用read命令来逐行读取文件的内容,写法如下:
+while read line; do
+    echo $line
+done < filename
+这个读取在遇到EOF时,会自己结束.如上所述,遇到EOF时,read命令返回一个非0值.
+注意: 使用上面的方法读取文件内容,可能存在一个相当隐晦的异常,描述如下:
+使用read命令读取文件内容时,类似于C语言的fgets()函数,读取会在遇到EOF或者
+换行符('\n')时终止.如果文件的最后一行不是以换行符结尾,那么上面的while循环
+将会处理不到最后一行.因为read命令读取到EOF就会返回 1. 如下面的例子所示:
+john:~$echo -ne "a\nb" > test  # 使用echo的-n选项,指定不追加换行,则生成的
+john:~$cat test    # test文件的最后一行不是以换行符结尾.所以,使用cat命令
+a                  # 命令输出test文件内容时,可以看到输出的"b"和Bash提示符
+bjohn:~$while read line; do  # 在同一行,因为没有换行. 此时,使用上面的while
+> echo ${line}     # 循环读取test文件内容,可以看到,最后一行"b"没有被打印出
+> done < test      # 来. 在test文件的最后一行中,"b"后面直接跟着EOF,read命令
+a                      # 在读取这一行时,遇到了EOF,它把"b"存入了line变量中,
+john:~$echo ${line}    # 然后返回 1,while循环遇到 1,停止循环. 可以看到,下面
+b   # 输出line变量的值,里面确实是有值的.但是while循环处理不到这一行.
+john:~$ls -l test  # 使用 ls -l 查看test的文件大小,可以看到,test文件只有3个
+-rw-r--r-- 1 john john 3  1月 24 10:10 test # 字符,也就是'a','\n','b'.
+#### 可以使用下面的 while 循环来更好的看到read命令的返回值 ####
+john:~$while true; do
+> read line
+> ret=$?                     # 保存刚才 read 命令的返回值
+> echo $ret ---- ${line}     # 打印 read 命令的返回值和read命令读取到的内容
+> if [ $ret -ne 0 ]; then    # 如果 read 命令返回值不是0,就退出while循环
+> break
+> fi
+> done < test
+0 ---- a                     # 可以看到,在读取最后一行时, read 命令返回了
+1 ---- b                     # 1, 但是line中还是保存了最后一行的内容.
+##### 当不使用echo命令的-n选项时,测试结果就会有所不同 ####
+john:~$echo -e "a\nb" > test # 由于echo命令没有使用-n选项,此时最后一行"b"
+john:~$cat test              # 后面就会跟着换行符,换行符之后才是EOF. 所以,
+a                            # 用cat命令输出test文件内容时,"b"位于单独一行
+b
+john:~$while read line; do echo ${line}; done < test
+a                            # 再使用上面的while循环打印test的内容,可以看
+b                            # 到最后一行"b"被出来了.
+john:~$ls -l test   # 再用 ls -l 查看test文件大小,发现test文件有四个字节,也
+-rw-r--r-- 1 john john 4  1月 24 10:17 test  # 就是'a','\n','b','\n'.
+#### 此时,使用下面的 while 循环查看read命令返回值,结果有所不同 ####
+john:~$while true; do
+> read line
+> ret=$?
+> echo $ret ---- ${line}
+> if [ $ret -ne 0 ]; then
+> break
+> fi
+> done < test
+0 ---- a # 可以看到,此时read命令读取最后一行时,遇到换行符终止,返回值
+0 ---- b # 是0. 然后while循环继续用read命令读取文件内容,遇到EOF,返回1,
+1 ----   # 此时,read命令读取的内容是空的.
+
+所以,如果用这种类型的while循环读取文件内容时,一定要保证文件最后一行以换行符
+结尾,否则这个while循环将会处理不到最后一行!
+(2)read命令的 -p 选项可以指定一个提示字符串. 例如:
+john:~$function read_and_echo() { read -p "$1: " str; echo read: ${str}; }
+john:~$read_and_echo 'test>'
+test>: tian xia you qing ren
+read: tian xia you qing ren
+john:~$read_and_echo '$'
+$: tian xia you qing ren
+read: tian xia you qing ren
+当使用while循环不断调用read命令,且用-p指定'$'字符时,看起来像一个小型shell.
+(3)read命令的 -e 选项表示在交互式shell中使用 readline 获取行.此时将可以用
+上下光标键来获取历史命令. 例如:
+# 当不使用-e选项时,输入上光标键,read读取到"^[[A",输入下光标将,read读取到
+# "^[[B". 而使用-e选项时,输入上下光标键,将会显示历史命令.除此之外,-e选项
+# 让 read 命令可以使用 readline 绑定的其他键,如Ctrl-p查看上一个历史命令等.
+john:~$read
+^[[A^[[B
+john:~$read -e
+read
+---------------------------------------
+注意: -e 选项只在交互式shell中有效.一般来说,shell脚本是在非交互式shell中
+执行,当在shell脚本中使用 read -e 时,输入上下光标键,不会读取到"^[[A","^[[B",
+但是也不会返回历史命令,而是什么都读取不到.如果想让shell脚本在交互模式下运
+行,可以使用 bash 的 "-i" 选项:
+    -i        If the -i option is present, the shell is interactive.
+例如将脚本的解释器写为: "#/bin/bash -i"

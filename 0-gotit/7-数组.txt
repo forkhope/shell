@@ -1,0 +1,48 @@
+一. 关联数组
+BASH 支持关联数组,可以使用任意的字符串作为下标(不必是整数)来访问数组
+元素.关联数组的下标和值称为键值对,它们是一一对应关系,键是唯一的,值可以
+不唯一. 注意,在使用关联数组之前,需要使用 declare -A array 来进行显式声明
+查看help declare的帮助信息,可以看到"-A"选项的说明为:
+    -A  to make NAMEs associative arrays (if supported)
+关联数组的常用操作如下:
+${!array[*]}: 取关联数组所有键
+${!array[@]}: 取关联数组所有键
+${array[*]}:  取关联数组所有值
+${array[@]}:  取关联数组所有值
+${#array[*]}: 关联数组的长度,即元素个数
+${#array[@]}: 关联数组的长度,即元素个数
+在上面中,@和*的区别是: If the word is double-quoted, ${array[*]} expands to
+a single word with the value of each array member separated by the first
+character of the IFS special variable, and ${array[@] expands each element
+of array to a separate word. When there are no array members, ${array[@]}
+expands to nothing.
+
+一个关联数组的使用例子如下:
+declare -A filetypes
+filetypes=([apk]=app [jar]=framework [so]=lib)
+(1)执行echo ${filetypes[apk]}会输出app,执行echo ${filetypes["apk"]}也会
+输出app.如果执行echo ${filetypes[app]}或者echo ${filetypes[cfg]}则会输出
+空,即提供一个不存在的键则会返回空值.
+(2)执行for i in ${filetypes[@]}; do echo $i; done会输出
+app
+framework
+lib
+(3)执行for i in ${filetypes[*]}; do echo $i; done也会输出
+app
+framework
+lib
+(4)执行for i in "${filetypes[*]}"; do echo $i; done会输出
+app framework lib
+(5)执行for i in "${filetypes[@]}"; do echo $i; done还是会输出
+app
+framework
+lib
+
+二. 一维数组
+Bash只支持一维数组,声明数组的方式是: declare -a array.由于Bash不要求明确指
+定变量的类型,其实可以不用声明,按数组的方式直接赋值给变量即可.其赋值方式为:
+(1) array=(var1 var2 var3 ... varN)
+(2) array=([0]=var1 [1]=var2 [2]=var3 ... [n]=varN)
+(3) array[0]=var1; array[1]=var2; array[2]=var3; ...; array[n]=varN;
+一维数组的其他用法和上面的关俩数组用法是一样的,例如可以用${#array[@]}来获
+取数组元素个数, ${array[@]} 来获取数组所有元素等.

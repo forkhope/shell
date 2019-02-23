@@ -1,0 +1,31 @@
+在man bash手册中,查找EXPANSION关键字,就能找到关于扩展的描述.
+一. 算术扩展
+Arithmetic expansion allows the evaluation of an arithmetic expression and
+the substitution of the result. The format for arithmetic expansion is:
+$((expression)). The old format $[expression] is deprecated and will be
+removed in upcoming versions of bash. The expression is treated as if it
+were within double quotes, but a double quote inside the parentheses is not
+treated specially. If expression is invalid, bash prints a message
+indicating failure and no substitution occurs.
+
+二. 变量扩展
+1.变量扩展时,是否用双引号将变量括起来,扩展出来的结果有所不同.例如:
+john:~$arg_expand()
+> {
+> set -x
+> tian="tian xia"
+> echo ${tian}
+> echo "${tian}"
+> }
+john:~$arg_expand
++ tian='tian xia'
++ echo tian xia
+tian xia
++ echo 'tian xia'
+tian xia
+--------------------------
+上面执行set -x,打开脚本调试选项,可以看到:
+(1) echo ${tian} 的调试信息是: + echo tian xia. 所输出的tian xia没有被单
+引号括起来,所以后面在进行单词分隔时,tian和xia会被分隔成两个独立的单词.
+(2) echo "${tian"} 的调试信息是: + echo 'tian xia'. 所输出的tian xia被单
+引号括起来,后面在进行单词分隔时,它们会被认为是一个整体,是独立的一个单词.

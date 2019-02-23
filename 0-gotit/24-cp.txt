@@ -1,0 +1,18 @@
+描述 cp 命令的使用
+
+一. 拷贝时自动创建不存在的子目录
+cp命令的 --path 选项可以在拷贝的时候自动创建不存在的子目录.例如
+    cp --path first/second/third.txt target/
+命令将会在 target 目录下创建 first 子目录,而 first 子目录中会再创建 second
+子目录,在 second 子目录中在创建 third.txt 文件.这个命令类似于下面的命令
+    mkdir -p target/first/second
+    cp first/second/third.txt target/first/second/
+查看"man cp"手册,里面没有看到"--path"选项.但实际上,这个选项是有效的.
+
+二. 只拷贝新修改过或者不存在的文件
+有时候拷贝一个很大的目录(目录里面有很多子目录或者文件),但是拷贝到中途时,异
+常中止了,需要重新拷贝.这个时候不希望拷贝已经拷过的文件,而是只拷贝还没有拷
+过的文件.那么可以使用 cp 命令的 -u 选项:
+-u, --update
+    copy only when the SOURCE file is newer than the destination
+    file or when the destination file is missing.

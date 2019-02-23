@@ -1,0 +1,49 @@
+描述 expr 命令的使用
+expr EXPRESSION:
+Print the value of EXPRESSION to standard output. EXPRESSION may be:
+(1)ARG1 | ARG2: ARG1 if it is neither null nor 0, otherwise ARG2
+(2)ARG1 & ARG2: ARG1 if neither argument is null or 0, otherwise 0
+(3)ARG1 < ARG2: ARG1 is less than ARG2
+(4)ARG1 <= ARG2: ARG1 is less than or equal to ARG2
+(5)ARG1 = ARG2: ARG1 is equal to ARG2
+(6)ARG1 != ARG2: ARG1 is unequal to ARG2
+(7)ARG1 >= ARG2: ARG1 is greater than or equal to ARG2
+(8)ARG1 > ARG2: ARG1 is greater than ARG2
+(9)ARG1 + ARG2: arithmetic sum of ARG1 and ARG2
+(10)ARG1 - ARG2: arithmetic difference of ARG1 and ARG2
+(11)ARG1 * ARG2: arithmetic product of ARG1 and ARG2
+(12)ARG1 / ARG2: arithmetic quotient of ARG1 divided by ARG2
+(13)ARG1 % ARG2: arithmetic remainder of ARG1 divided by ARG2
+(14)STRING : REGEXP: anchored pattern match of REGEXP in STRING
+(15)match STRING REGEXP: same as STRING : REGEXP
+(16)substr STRING POS LENGTH: substring of STRING, POS counted from 1
+(17)index STRING CHARS: index in STRING where any CHARS is found, or 0
+(18)length STRING: length of STRING
+(19)+ TOKEN: interpret TOKEN as a string, even if it is a keyword
+             like `match' or an operator like `/'
+(20)( EXPRESSION ): value of EXPRESSION.
+             注意:实际上要写为\( expr \)或者\(expr\). Bash中,()默认用来启
+             动一个子shell执行里面的代码,不加转义字符的话,就会报错.
+Beware that many operators need to be escaped  or  quoted  for  shells.
+Comparisons are arithmetic if both ARGs are numbers, else lexicographical.
+Pattern matches return the string matched between \(  and  \)  or null; if
+\( and \) are not used, they return the number of characters matched or 0.
+
+Exit status is 0 if EXPRESSION is neither null nor 0, 1  if  EXPRESSION
+is  null  or  0,  2 if EXPRESSION is syntactically invalid, and 3 if an
+error occurred.
+(1) 注意 ( expr ) 命令要添加转义字符.
+如上所述,由于 () 在Bash中有特殊含义,在使用 ( expr ) 表达式时,要加转义字符
+john:~$expr ( "3" != "2" )   # 没有加转义字符时, 这种写法报错
+bash: 未预期的符号 `"3"' 附近有语法错误
+john:~$expr \( "3" != "2" \) # 加了转义字符,正常执行,判断出表达式为假
+1
+
+(2) 注意使用 expr index 时,字符串中的空格
+在expr index STRING CHARS中,若STRING包含有空格,要用双引号括起来,否则报错.
+john:~$str="tian xia - you qing ren"
+john:~$expr index $str "t"    # str字符串中包含有空格,当$str不加双引号时,
+expr: non-integer argument    # 执行expr index命令报错
+john:~$expr index "$str" "t"  # 当$str添加了双引号后,就不会报错了
+1
+

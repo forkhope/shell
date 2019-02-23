@@ -1,0 +1,4 @@
+a20:./build.sh -p sun7i_android
+a31s:./build.sh -p sun6i_fiber_a31s
+a13-4.0:./build.sh -p a13_nuclear -k 3.0
+a13-4.2:./build.sh -p a13_jb42 -k 3.0
