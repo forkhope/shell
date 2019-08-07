@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# project git_root_dir1/ foo
+# project git_root_dir1/
 # foo     file_path1
-# project git_root_dir2/ foo
+# project git_root_dir2/
 # foo     file_path1
 # 里面的内容分为多段,每段以project作为标识,project后面跟着git仓
 # 库的根目录,要求以'/'结尾.在遇到下一个project开头的行之前,当前
@@ -85,7 +85,7 @@ fi
 # 并进行排序,删除重复行.这样就得到基于Android源码根目录的完整文件路径.
 # 例如下面的"project"后面的"linux-3.4"是仓库名,
 # "M"后面的内容是该仓库下发生变动的文件路径,添加上仓库名后就是完整的路径名.
-# project linux-3.4/ foo
+# project linux-3.4/
 # M   drivers/input/sw-device.c
 # 则过滤后的内容是: linux-3.4/drivers/input/sw-device.c
 # 过滤后的文件内容会被保存到 target_gitlog_file 指定的文件下.
@@ -113,9 +113,9 @@ parse_gitlog_info()
             # 当文件中有空行时,readline的内容会是null,后面组装
             # sub_file_path的值会有异常,所以上面用-n判断不为空才处理.
             sub_file_path="$(echo ${fileline} | awk '{print $2}')"
-            # 实际测试发现,如果project git_root_dir/字符串后面foo
+            # 实际测试发现,如果project git_root_dir/字符串后面没有foo
             # 占位符,那么获取到git_root_dit/后面会跟着回车符\r,下面的
-            # project_dir变量的值也有换行符,此时z拼装到full_file_path
+            # project_dir变量的值也有换行符,此时再拼装到full_file_path
             # 里面会有问题,这些内容不在同一行里面,无法正常解析.
             # NOTE: 后来发现是这个文件是在Windows下生成,文件末尾是\r\n
             # 字符,其实echo命令会过滤掉末尾的\n,但不会过滤\r,这个字符
@@ -173,4 +173,4 @@ copy_gitlog_files "${target_gitlog_file}"
 cp -uv "${filename}" "${COPY_TARGET_ROOT}/${filename}"
 mv -v "${target_gitlog_file}" "${COPY_TARGET_ROOT}/${target_gitlog_file}"
 
-exit 
+exit
