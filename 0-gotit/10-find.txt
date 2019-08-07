@@ -46,3 +46,11 @@ print the full file name on the standard output, followed by a newline.
 newline at the end of the string. 一些转换格式描述如下:
 %f: File's name with any leading directories removed (only the last element)
 %p: File's name
+
+五. 指定查找多个目录
+当指定查找多个目录时,直接在find后面写上这么目录的路径即可,不用加上-o、-path等选项.
+例如, find ./src ./res 命令会在src/、res/目录下递归查找所有文件.
+如果还要同时指定忽略这些目录底下的某个子目录,可以再加上-path pathname -prune选项.
+例如, find src res \( -path "*git" -o -path "*test*" \) -prune -o -print
+注意,此时要加上 -o -print 才能打印出来查找到的文件名. 如果不加 -o -print,会打印
+所忽略的目录名,而不是打印所找到的目录名、或者文件名.
