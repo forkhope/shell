@@ -87,8 +87,15 @@ execute_command()
     echo -e "\033[33m${cmd} $@\033[0m"
 }
 
-# 查看所有仓库状态.repo status命令的输出结果已经过滤过,不需要再过滤.
+# 查看所有仓库状态.
 # 该函数的第一个参数用于指定并发查询的线程数,如果没有指定,默认是 4.
+# 执行 git status 命令会打印类似如下的说明信息：
+# On branch project_name
+# Your branch is update-to-date with project_name
+# 之后才是本地文件的改动状态，比如新增文件还没有被add来跟踪状态。
+# 当查看所有仓库的status时，为了方便查看，想要把这些说明信息过滤掉，
+# 只显示project路径和改动的文件名。后来发现repo status命令的输出
+# 结果就只显示project和改动的文件名，已经过滤过，不需要再过滤。
 repo_status()
 {
     local job_number=4
