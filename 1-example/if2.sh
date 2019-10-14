@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$1" == "hello" ]; then
-	echo "Hello, I am lixianyi."
+	echo "Hello, World."
 elif [ "$1" == "" ]; then
 	echo "You must input paramters, ex> $0 someword"
 else

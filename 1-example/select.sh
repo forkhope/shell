@@ -18,7 +18,7 @@ select result in $OPTIONS
 do
 	case $result in
 	Hello)
-	 	echo "$result, I am lixianyi!";;  #此时, result == Hello
+	 	echo "$result, Hello World!";;  #此时, result == Hello
 	date)
 		$result;; #此时, result == cal
 	cal)
