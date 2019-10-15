@@ -1,6 +1,6 @@
 #!/bin/bash
 # 这个脚本提供函数接口来解析操作特定格式的配置文件.其默认格式为: key|value
-# 例如: e|exdroid.其中, e 就是 key. exdroid 就是 value. 脚本支持如下功能:
+# 例如: a|android. 其中, a 就是 key. android 就是 value. 脚本支持如下功能:
 # 1.根据所提供的 key 获取到对应的 value.
 # 2.查看配置文件的内容.
 # 3.使用 vim 打开配置文件,以供编辑.
@@ -139,8 +139,9 @@ show_key_value()
     echo "配置文件中的键值对为:"
     # ${!array[@]} 对应关联数组的所有键. ${array[@]}对应关联数组的所有值.
     # 下面先获取关联数组的键,再通过键名来获取键值,并把键名和键值都打印出来.
+    # 用\t来打印TAB进行对齐,如果在\t前面不加空格有时候会对不齐,原因不明.
     for key_name in ${!key_values[@]}; do
-        echo -ne "key='\033[32m${key_name}\033[0m'\t"
+        echo -ne "key='\033[32m${key_name}\033[0m' \t"
         echo -e "value='\033[33m${key_values["${key_name}"]}\033[0m'"
     done
 }
