@@ -1,6 +1,12 @@
 #!/bin/bash
+# 在整理代码修改前后时,需要拷贝代码到after和before目录下,该脚本就用于
+# 自动拷贝修改前后的代码到各自的目录下.它会在当前工作目录下新建一个
+# "0-代码修改"的目录,然后根据操作选项(-a或-b),又在"0-代码修改"目录里面
+# 新建一个after或者before目录,然后读取所给的文件来获得要拷贝的文件信息,
+# 把里面指定的文件按照对应的目录结构拷贝到after或者before目录下.
 set -e
 
+# 要拷贝的文件信息的具体的格式为:
 # project git_root_dir1/
 # foo     file_path1
 # project git_root_dir2/
@@ -9,7 +15,7 @@ set -e
 # 库的根目录,要求以'/'结尾.在遇到下一个project开头的行之前,当前
 # project往下的行都属于该段,上面写有foo的部分是占位符,内容不限,但一
 # 定要有;第二列是git仓库下的文件路径.一个例子如show_help()函数所示.
-# 这些信息可以通过repo status或者git log --name-status命令得到.
+# NOTE 这些信息可以通过repo status或者git log --name-status命令得到.
 show_help()
 {
 printf "USAGE
@@ -25,8 +31,8 @@ OPTIONS
              -m   include/telephony/ril.h
              !!注意!!: 该文件要放在Android源码的根目录下.如果没有提供
              该参数,默认使用的文件名是: gitlog-files.txt.
-             这个文件必须是unix格式,不带\r字符,如果带了\r字符,可以用dos2unix
-             命令来转换成unix格式文件,再执行这个脚本.
+             这个文件必须是unix格式,不带\r字符,如果是从Windows拷贝过来的文件,
+             带了\r字符,可以用dos2unix命令转换成unix格式文件,再执行这个脚本.
 "
 }
 
@@ -164,8 +170,8 @@ copy_gitlog_files()
 # dos格式文件末尾是\r\n,而unix格式的文件末尾是\n,且把\r视作有效字符,
 # 如果不做转换,那么传入一个dos格式的文件,最后得到的文件名路径会包含\r
 # 字符,它会被当做文件名的一部分,cp命令拷贝时会提示找不到这样的文件.
-# 为了避免多次执行这个语句,先注释掉.对于dos格式的文件单独执行下面的命令
-# dos2unix "${filename}"
+# 为了避免多次执行这个语句,先注释掉.可以在shell中自行转换dos格式的文件
+## dos2unix "${filename}"
 parse_gitlog_info "${filename}"
 copy_gitlog_files "${target_gitlog_file}"
 
