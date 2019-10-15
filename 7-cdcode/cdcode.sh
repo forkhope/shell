@@ -20,7 +20,7 @@ DIRINFO="${HOME}/.liconfig/dirinfo.txt"
 COMPILE_PREFIX="+"
 # 指定编译 Android 时默认要 lunch 的分支名
 # 将DEFAULT_LAUNCH_COMBO修改成要编译的project名称
-DEFAULT_LAUNCH_COMBO="xxxxx-userdebug"
+DEFAULT_LAUNCH_COMBO="Your_project_name"
 
 # 该变量保存代码根目录的完整路径,后续作为要cd到的路径的一部分.
 # !!注意!!: 不要在脚本开头为这个变量赋初值!每次 cd 时,都会执行这个脚本,但
@@ -98,9 +98,12 @@ setup_project_root()
 # 下,这会引入目录名的限制,目前不采用这种方法.
 check_project_root()
 {
+    # 查看man bash的"Compound Commands"小节说明, =~ 判断右边字符串是否匹配
+    # 左边字符串.且操作符右边的字符串被认为是扩展正则表达式.如果左边字符串
+    # 匹配右边的模式,其返回状态码是0,否则是1.
     if [[ ! $(pwd) =~ "${project_root_dir}" ]]; then
         echo -e 当前路径'\033[31m' $(pwd) '\033[0m'位于设置的代码根目录之外,
-        echo -e 将会跳转到'\033[32m' 代码根目录${project_root_dir} '\033[0m'底下的子目录!
+        echo -e 将会跳转到'\033[32m' 代码根目录${project_root_dir} '\033[0m'底下的目录!
     fi
 }
 
@@ -108,7 +111,7 @@ source_and_lunch()
 {
     # 如果 project_root_dir 变量为空,则还没有设置代码根目录,报错返回
     if [ -z "${project_root_dir}" ]; then
-        echo "要先执行 $(basename $0) -r project_root_dir 设置代码根目录!"
+        echo "还没有设置代码根目录,请使用-h选项查看脚本帮助说明."
         return 1
     fi
 
@@ -142,23 +145,37 @@ compile_android()
 # 找到多个匹配项,就弹出列表给用户选择,选择之后再 cd 过去.
 # 这个函数复制自Android源码的build/make/envsetup.sh文件,进行了一些修改.
 godir() {
+    # 如果 project_root_dir 变量为空,则还没有设置代码根目录,报错返回
+    if [ -z "${project_root_dir}" ]; then
+        echo "还没有设置代码根目录,请使用-h选项查看脚本帮助说明."
+        return 1
+    fi
     if [[ -z "$1" ]]; then
         echo "Usage: godir <regex>"
-        return
+        return 1
     fi
     local T="${project_root_dir}/"
-    local FILELIST="filelists"
+    # envsetup.sh 是把文件信息写入 filelists 文件,修改写入的文件名
+    # 为 gtags.files,这是 gtags 要解析的文件名,这两者需要的文件内容
+    # 是一样的,只生成一份文件即可.
+    local FILELIST="gtags.files"
     if [[ ! -f $T/${FILELIST} ]]; then
         echo -n "Creating index..."
         \cd $T
+        # 下面的find指定只在 bionic、build、frameworks 等目录下查找,
+        # 且通过-path和-prune选项忽略这些目录下带有 test、git 等名称的
+        # 子目录,最后通过正则表达式查找指定后缀名的文件.使用$来要求匹
+        # 配末尾. 下面的 -print 要写在最后面,把最终查找的文件名打印出
+        # 来,如果写在-prune的后面,它是打印-prune的结果,不是打印-regex
+        # 匹配的文件结果. -regex 和 -type 之间不用加-o,加上反而有问题.
         find ./bionic ./build ./device ./external \
             ./frameworks ./hardware ./kernel \
             ./packages ./system ./vendor \
             \( -path "*test*" -o -path "*tools" -o -path "*docs" \
             -o -path "*git*" -o -path "*svn" \) -prune \
-            -o -print -o -type f \
-            | grep "\.[a-z]" | grep -v -E "\.html|\.txt" > $FILELIST
-            # -o -regex '.*\.\(c\|xml\|cpp\|h\|java\|rc\|mk\|fex\)'
+            -o -regex '.+\.\(c\|h\|cpp\|cc\|hpp\|java\|rc\|xml\)$' \
+            -type f -print > $FILELIST
+            # grep -E "\.\w+$" | grep -v -E "\.html$|\.txt$|\.so$"
         echo " Done"
     fi
     local lines
@@ -190,7 +207,7 @@ godir() {
     else
         pathname=${lines[0]}
     fi
-    echo -e "\033[33mFind it. Let's Go !!!\033[0m"
+    echo -e "\033[32mFind it. Let's Go!\033[0m"
     \cd $T/$pathname
 }
 
@@ -226,19 +243,6 @@ handle_symbol()
     return 1
 }
 
-if [ $# -eq 0 ]; then
-    if [ -z "${project_root_dir}" ]; then
-        # 如果 project_root_dir 变量为空,则还没有设置代码根目录,打印帮忙信息
-        echo "NOTE: 还没有设置代码根目录,请参考脚本说明设置代码根目录."
-        cdcode_show_help
-    else
-        # 如果 project_root_dir 变量不为空,这不带参数时,默认cd到代码根目录下
-        \cd "${project_root_dir}"
-    fi
-    # 由于不带参数,不需要往下处理,直接return
-    return 0
-fi
-
 # 经过验证发现,用source命令来执行该脚本后,OPTIND的值不会被重置为1,导致
 # 再次用source命令执行脚本时,getopts解析不到参数,所以手动重置OPTIND为1.
 OPTIND=1
@@ -263,13 +267,29 @@ while getopts "hf:pr:smlvi:ea:d:" opt; do
     esac
 done
 
-# 如果传入的参数都是选项,就结束执行,否则会继续往下解析剩余的symbol参数.
-if [ $# -eq $((OPTIND-1)) ]; then
+# $# 大于0,说明提供了命令参数. $# 等于OPTIND减去1,说明传入的参数都
+# 是命令选项. 此时,直接结束执行,不需要执行后面解析symbol参数的语句.
+# 下面的 -a 表示两个表达式都为真时才为真.表达式之间不要加小括号.
+# Shell里面的小括号有其他含义,跟C语言的小括号有些区别,加上会有问题.
+if [ $# -gt 0 -a $# -eq $((OPTIND-1)) ]; then
     return 0
+fi
+
+if [ -z "${project_root_dir}" ]; then
+    # 此时 project_root_dir 变量为空,还没有设置代码根目录,不需要处理,直接return
+    echo -e "\033[31m还没有设置代码根目录,请使用-h选项查看脚本帮助说明.\033[0m"
+    return 1
 fi
 
 # 检测当前路径是否位于代码根目录下,如果不是,打印一些提示信息.
 check_project_root
+
+if [ $# -eq 0 ]; then
+    # 此时 project_root_dir 变量不为空,不带参数时,默认cd到代码根目录下
+    \cd "${project_root_dir}"
+    # 由于不带参数,不需要往下处理,直接return
+    return 0
+fi
 
 # 移动脚本的参数,去掉前面输入的选项,只剩下表示路径简写的参数.
 shift $((OPTIND-1))
