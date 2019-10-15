@@ -1,0 +1,5 @@
+android/tools/
+android/vendor/third/opensource/interfaces/
+android/vendor/third/proprietary/camx/
+android/vendor/third/proprietary/chi-cdk/
+android/vendor/third/proprietary/interfaces/
