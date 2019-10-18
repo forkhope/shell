@@ -89,7 +89,7 @@ bar
 - 在引用shell变量时，如果变量名后面跟着其他字符，要用`{}`把变量名括起来，避免变量名后面的字符被当成变量名的一部分。例如，有一个pat变量，那么 $pat 获取这个变量的值，${pat}A 表示在pat变量值后面还跟着一个字符A，但是 $patA 表示的是获取名为 patA 的变量值。
 
 # 只打印特定匹配的行
-查看 GNU sed 的在线帮助链接：(https://www.gnu.org/software/sed/manual/sed.html)，里面有如下说明。
+查看 GNU sed 的在线帮助链接：(https://www.gnu.org/software/sed/manual/sed.html). 里面有如下说明：
 > By default sed prints all processed input (except input that has been modified/deleted by commands such as d). Use -n to suppress output, and the p command to print specific lines. The following command prints only line 45 of the input file:
 ```bash
     sed -n '45p' file.txt
