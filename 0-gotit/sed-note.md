@@ -6,7 +6,7 @@ sed 命令的完整格式如下：
 sed 命令是一个流编辑器 (stream editor)，可以对输入的文本内容进行处理，文本内容可来自文件或者管道。它默认把处理后的结果打印到标准输出，不修改文件本身内容。
 
 在 man sed 里面没有具体说明sed命令的处理结果会输出到哪里。
-查看GNU sed的在线帮助手册会有说明：(https://www.gnu.org/software/sed/manual/sed.html#output)
+查看GNU sed的在线帮助手册会有说明：<https://www.gnu.org/software/sed/manual/sed.html#output>
 > sed writes output to standard output. Use -i to edit files in-place instead of printing to standard output. See also the W and s///w commands for writing output to other files. The following command modifies file.txt and does not produce any output:
 ```bash
     sed -i 's/hello/world/' file.txt
@@ -89,7 +89,7 @@ bar
 - 在引用shell变量时，如果变量名后面跟着其他字符，要用`{}`把变量名括起来，避免变量名后面的字符被当成变量名的一部分。例如，有一个pat变量，那么 $pat 获取这个变量的值，${pat}A 表示在pat变量值后面还跟着一个字符A，但是 $patA 表示的是获取名为 patA 的变量值。
 
 # 只打印特定匹配的行
-查看 GNU sed 的在线帮助链接：(https://www.gnu.org/software/sed/manual/sed.html). 里面有如下说明：
+查看 GNU sed 的在线帮助链接：<https://www.gnu.org/software/sed/manual/sed.html>. 里面有如下说明：
 > By default sed prints all processed input (except input that has been modified/deleted by commands such as d). Use -n to suppress output, and the p command to print specific lines. The following command prints only line 45 of the input file:
 ```bash
     sed -n '45p' file.txt
@@ -142,7 +142,7 @@ the auxiliary hold space. Both are initially empty.
 
 > sed operates by performing the following cycle on each line of input: first, sed reads one line from the input stream, removes any trailing newline, and places it in the pattern space. Then commands are executed; each command can have an address associated to it: addresses are a kind of condition code, and a command is only executed if the condition is verified before the command is to be executed.
 
-> When the end of the script is reached, unless the -n option is in use, the contents of pattern space are printed out to the output stream, adding back the trailing newline if it was removed.8 Then the next cycle starts for the next input line.
+> When the end of the script is reached, unless the -n option is in use, the contents of pattern space are printed out to the output stream, adding back the trailing newline if it was removed. Then the next cycle starts for the next input line.
 
 基于这部分说明，*pattern space* 是一块buffer，存放要处理的输入行，sed 命令会对这一行进行处理，有些命令还会修改这一行的内容，处理结束后，可以用 p 命令打印 pattern space 里面的内容。由于这个内容可能会被修改，跟原始输入行的内容不一定完全一样。  
 例如，查看上面帮助链接对 s 命令的说明，就能看到 s 命令会修改pattern space的内容：
@@ -174,9 +174,9 @@ the auxiliary hold space. Both are initially empty.
 
 即，-e 指定执行后面跟着的命令，多个 -e 可以指定执行多个不同的命令。
 
-在 man sed 中，没有说明可以用分号(;)来分割多个匹配项，要查看 info sed 里面的完整帮助手册，才有相关描述。如果不习惯查看info命令的内容格式，可以在网上在线查看帮助手册，GNU sed home page: (<http://www.gnu.org/software/sed/>)
+在 man sed 中，没有说明可以用分号(;)来分割多个匹配项，要查看 info sed 里面的完整帮助手册，才有相关描述。如果不习惯查看info命令的内容格式，可以在网上在线查看帮助手册，GNU sed home page: <http://www.gnu.org/software/sed/>
 
-其中，HTML版本的帮助手册链接是：(https://www.gnu.org/software/sed/manual/sed.html)  
+其中，HTML版本的帮助手册链接是：<https://www.gnu.org/software/sed/manual/sed.html>  
 该帮助链接对用分号(;)分割多个匹配项的说明如下，里面还提到可以用换行符来分割。
 > Commands within a script or script-file can be separated by semicolons (;) or newlines (ASCII 10). Multiple scripts can be specified with -e or -f ptions.
 
