@@ -30,7 +30,7 @@ OPTIONS
              project hardware/ril/                 branch develop
              -m   include/telephony/ril.h
              !!注意!!: 该文件要放在Android源码的根目录下.如果没有提供
-             该参数,默认使用的文件名是: gitlog-files.txt.
+             文件名参数,默认使用的文件名是: gitlog-files.txt.
              这个文件必须是unix格式,不带\r字符,如果是从Windows拷贝过来的文件,
              带了\r字符,可以用dos2unix命令转换成unix格式文件,再执行这个脚本.
 "
@@ -80,7 +80,6 @@ fi
 
 # 检查Android源码根目录下是否存在一个指定的git log信息文件.
 # 该变量保存脚本所要解析的文件名.这个文件存有所要拷贝的文件信息.
-# 注意: 这个文件的最后一行一定要以空行结尾,否则最后一行处理不到!
 if [ ! -f "${filename}" ]; then
     echo "出错: 在当前目录下不存在要解析的 ${filename} 文件!"
     exit 1 
@@ -104,12 +103,23 @@ parse_gitlog_info()
         return 1
     fi
     local PROJECT_IDENTIFY="project"
-    local gitlog_file
+    local gitlog_file fileline
     local header project_dir sub_file_path full_file_path
     local temp_file="temp.txt"
 
     # 获取要解析的源文件名,并把要过滤的git log信息写入到该文件.
     gitlog_file="${1}"
+
+    # 如果文件的最后一行没有以换行符'\n'结尾, read 命令在读取最后一行
+    # 时会返回false,从而退出下面的 while 循环,导致最后一行没有被处理,
+    # 会少复制一个文件.下面使用 tail 命令获取文件的最后一个字符,由于
+    # $() 表达式会去掉输出结果末尾的换行符,如果文件的最后一个字符是换
+    # 行符,经过 "$()" 扩展后会变成空,可以通过判断扩展后的结果是否为空
+    # 来确认文件是否以换行符结尾.如果不以换行符结尾,则使用 echo 命令
+    # 给文件末尾追加一个换行符. test -n 命令判断字符串不为空返回true.
+    if test -n "$(tail "${gitlog_file}" -c 1)"; then
+        echo >> "${gitlog_file}"
+    fi
 
     while read fileline; do
         header="$(echo ${fileline} | awk '{print $1}')"
