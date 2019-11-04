@@ -201,6 +201,12 @@ while getopts "rich" arg; do
 done
 ```
 
+如果要提前跳出循环，可以使用 `break` 命令。查看 man bash 对 `break` 命令说明如下：
+> **break [n]** 
+Exit from within a for, while, until, or select loop.  If n is specified, break n levels.  n must be ≥ 1.  If n is greater than the number of enclosing loops, all enclosing loops are exited. The return value is 0 unless n is not greater than or equal to 1.
+
+即，`break` 命令可以跳出 for 循环、while 循环、until 循环、和 select 循环。
+
 # Bash 的 for 命令详解
 Bash 的 for 复合命令 (compound command) 可以用于循环执行指定的语句。该命令有两种不同的格式，查看 man bash 里面对 for 命令的说明，分别描述如下。
 
@@ -262,3 +268,9 @@ count_str = 0123456789
 可以看到，要使用 `((count+=$i))` 这种写法才是进行算术运算，*count* 变量值才会像整数一样进行加减。写为 `count_str+=$i` 的形式，其实是进行字符串拼接。
 
 在上面的两个小括号里面引用 *MAX* 变量值时没有加 `$` 符号，这是允许的。当然，写成 `$MAX` 也可以。
+
+如果要提前跳出循环，可以使用 `break` 命令。查看 man bash 对 `break` 命令说明如下：
+> **break [n]** 
+Exit from within a for, while, until, or select loop.  If n is specified, break n levels.  n must be ≥ 1.  If n is greater than the number of enclosing loops, all enclosing loops are exited. The return value is 0 unless n is not greater than or equal to 1.
+
+即，`break` 命令可以跳出 for 循环、while 循环、until 循环、和 select 循环。
