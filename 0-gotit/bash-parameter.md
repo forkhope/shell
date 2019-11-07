@@ -7,7 +7,7 @@
 - `$1`
 会获取到 `a`，即 `$1` 对应传给脚本的第一个参数。
 - `$2`
-会获取到 `b`，即 `$2` 对应传给脚本的第二个参数，`$3` 对应传给脚本的第三个参数，以此类推。
+会获取到 `b`，即 `$2` 对应传给脚本的第二个参数，`$3` 对应传给脚本的第三个参数，依此类推。
 - `$#`
 会获取到 3，对应传入脚本的参数个数，统计的参数不包括 `$0`。
 - `$@`
@@ -43,8 +43,8 @@ $ ./testparams.sh This is a test
 
 查看 man bash 里面对 positional parameter 的说明如下：
 > **Positional Parameters**  
-    A  positional  parameter  is  a  parameter  denoted by one or more digits, other than the single digit 0.  Positional parameters are assigned from the shell's arguments when it is invoked, and may be reassigned using the set builtin command.  Positional parameters may not be assigned to with assignment statements.  The positional parameters are temporarily replaced when a shell function is executed.  
-    When a positional parameter consisting of more than a single digit is expanded, it must be enclosed in braces.
+A  positional  parameter  is  a  parameter  denoted by one or more digits, other than the single digit 0.  Positional parameters are assigned from the shell's arguments when it is invoked, and may be reassigned using the set builtin command.  Positional parameters may not be assigned to with assignment statements.  The positional parameters are temporarily replaced when a shell function is executed.  
+When a positional parameter consisting of more than a single digit is expanded, it must be enclosed in braces.
 
 即，最后一句提到当 positional parameter 由多位数字组成时，需要用大括号`{}`把多位数字括起来。
 
@@ -204,7 +204,7 @@ Error occurs.
 ```
 可以看到，当正常遇到选项末尾时，OPTIND 变量的值是选项个数加 1；当遇到错误时，OPTIND 变量的值不是选项个数加 1；所以当 OPTIND 变量的值减去1，不等于 `$#` 时，就表示遇到了错误。
 
-## 通过 source 多次脚本对 OPTIND 的影响
+## 通过 source 多次执行脚本对 OPTIND 的影响
 由于 shell 不会自动重置 OPTIND 的值，通过 source 命令调用脚本是运行在当前 shell 下，如果要调用的脚本使用了 getopts 命令解析选项参数，在每次调用 getopts 之前，一定要手动重置 OPTIND 为 1，否则 OPTIND 的值不是从 1 开始递增，会获取到不预期的选项参数值。假设有一个 `test.sh` 脚本，其内容如下：
 ```bash
 #!/bin/bash
@@ -259,7 +259,7 @@ second:
 
 查看 man bash 里面对 `${parameter}` 表达式的含义说明如下：
 > **${parameter}**  
-    The value of parameter is substituted.  The braces are required when parameter is a positional parameter with more than one digit, or when parameter is followed by a character which is not to be interpreted as part of its name.  The parameter is a shell parameter or an array reference (Arrays).
+The value of parameter is substituted.  The braces are required when parameter is a positional parameter with more than one digit, or when parameter is followed by a character which is not to be interpreted as part of its name.  The parameter is a shell parameter or an array reference (Arrays).
 
 即，`{}` 的作用是限定大括号里面的字符串是一个整体，不会跟相邻的字符组合成其他含义。
 
@@ -276,3 +276,278 @@ SayHello
 可以看到，`$var Hello` 这种写法打印出来的 "Say" 和 "Hello" 中间有空格，不是想要的结果。而 `$varHello` 打印为空，这其实是获取 varHello 变量的值，这个变量没有定义过，默认值是空。`${var}Hello` 打印出了想要的结果，用 `{}` 把 var 括起来，明确指定要获取的变量名是 var，避免混淆。
 
 即，当用 $ 获取变量值时，如果变量名后面跟着空白字符，隔开了其他内容，可以不用大括号来把变量名括起来。如果要在把变量值和其他字符拼接起来，变量名后面直接跟着其他字符，就要用大括号把变量名括起来。
+
+# 用 bash 的参数扩展操作字符串
+在 bash 中，通常使用 `${parameter}` 获取 *parameter* 变量的值，这是一种参数扩展 (parameter expansion)。Bash 还提供了其他形式的参数扩展，可以对变量值做一些处理，起到操作字符串的效果。例如：
+- `${parameter:offset:length}` 从 *parameter* 变量值的第 *offset* 个字符开始，获取 *length* 个字符，得到子字符串。
+- `${#parameter}` 获取 *parameter* 变量值的字符串长度。
+- `${parameter#word}` 从 *parameter* 变量值的开头往后删除匹配 *word* 的部分，保留后面剩余内容。
+- `${parameter%word}` 从 *parameter* 变量值的末尾往前删除匹配 *word* 的部分，保留前面剩余内容。
+- `${parameter^^pattern}` 把 *parameter* 变量值中匹配 *pattern* 模式字符的小写字母转成大写。
+- `${parameter,,pattern}` 把 *parameter* 变量值中匹配 *pattern* 模式字符的大写字母转成小写。
+- `${parameter/pattern/string}` 把 *parameter* 变量值中匹配 *pattern* 模式的部分替换为 *string* 字符串。
+
+**注意**：这些表达式都不会修改 *parameter* 自身的变量值，它们只是基于 *parameter* 变量值扩展得到新的值，如果要保存这些值，需要赋值给具体的变量。
+
+查看 man bash 的 *Parameter Expansion* 小节，就能看到相关说明。具体举例说明如下。
+
+## ${parameter:offset} 和 ${parameter:offset:length}
+查看 man bash 对 `${parameter:offset}` 和 `${parameter:offset:length}` 的说明如下：
+> Substring Expansion. Expands to up to length characters of the value of parameter starting at the character specified by offset. If parameter is @, an indexed array subscripted by @ or *, or an associative array name, the results differ as described below.  If length is omitted, expands to the substring of the value of parameter starting at the character specified by offset and extending to the end of the value.  length and offset are arithmetic expressions.  
+If offset evaluates to a number less than zero, the value is used as an offset in characters from the end of the value of parameter. If length evaluates to a number less than zero, it is interpreted as an  offset  in characters  from  the end of the value of parameter rather than a number of characters, and the expansion is the characters between offset and that result.  Note that a negative offset must be separated from the colon by at least one space to avoid being confused with the :- expansion.
+
+即，`${parameter:offset:length}` 表达式从 *parameter* 变量值的第 *offset* 个字符开始，一直获取 *length* 个字符，得到一个子字符串，会包括第 *offset* 个字符自身。`${parameter:offset}` 表达式省略了 *length* 参数，会从 *parameter* 变量值的第 *offset* 个字符开始一直获取到末尾。这里的 *length* 和 *offset* 可以是算术表达式。字符串的 *offset* 从 0 开始。
+
+如果 *offset* 的数值小于 0，那么这个值被用作 *parameter* 变量值的末尾偏移，从后往前获取字符。如果 *length* 数值小于 0，它会被当成 *parameter* 变量值的末尾偏移，而不是当作总的字符数目，且扩展后的结果是在这两个偏移之间的字符。
+
+**注意**：一个负数的偏移量必须用至少一个空格和冒号分割开，以避免和 `:-` 扩展产生混淆。即，这种情况下的冒号 `:` 和 负号 `-` 之间至少要有一个空格，类似于 `: -` 的形式。
+
+具体举例说明如下：
+```bash
+$ value="This is a test string."
+$ echo ${value:5}
+is a test string.
+$ echo ${value:5:2}
+is
+$ echo ${value:5: -4}
+is a test str
+$ echo ${value: -7:3}
+str
+$ echo ${value: -7: -1}
+string
+```
+可以看到，`${value:5}` 获取从 *value* 变量值的第 5 个字符开始，一直到末尾的全部字符，注意偏移量是从 0 开始，获取到的子字符串包括第 5 个字符自身。`${value:5:2}` 从 *value* 变量值的第 5 个字符开始，获取包括该字符在内的两个字符，也就是 "is" 字符串。
+
+当所给的 *length* 参数值为负数时，负号和冒号之间要用空格隔开，此时 *length* 参数不表示要获取的字符个数，而是表示对应 *parameter* 变量值从后往前的偏移，而且这个偏移是从 1 开始。`${value:5: -4}` 表示从 *value* 变量值的第 5 个字符开始，一直获取到倒数第 4 个字符为止，不包括倒数第 4 个字符。
+
+当所给的 *offset* 参数值为负数时，负号和冒号之间要用空格隔开，此时 *offset* 参数对应 *parameter* 变量值从后往前的偏移，而且这个偏移是从 1 开始。`${value: -7:3}` 表示从 *value* 变量值的倒数第 7 个字符串开始，获取包括该字符在内的三个字符，也就是 "str" 字符串。
+
+`${value: -7: -1}` 表示从 *value* 变量值的倒数第 7 个字符串开始，一直获取到倒数第 1 个字符为止，包括倒数第 7 个字符，不包括倒数第 1 个字符，也就是 "string" 字符串，不包含最后的点号 `.`。
+
+## ${#parameter}
+查看 man bash 对 `${#parameter}` 的说明如下：
+> Parameter length. The length in characters of the value of parameter is substituted. If parameter is * or @, the value substituted is the number of positional parameters. If parameter is an array name subscripted by * or @, the value substituted is the number of elements in the array.
+
+即，如果 *parameter* 变量值是字符串，则 `${#parameter}` 可以获取到对应字符串的长度。举例如下：
+```bash
+$ value="123456"
+$ echo ${#value}
+6
+```
+
+**注意**：在 bash 的参数扩展中，数字属于 *positional parameters*，可以用数字来引用传入脚本或者函数的参数，当用在当前表达式时，就表示获取所传参数的字符串长度。例如 `$1` 对应传入的第一个参数，那么 `${#1}` 对应所传入第一个参数的字符串长度。具体举例如下：
+```bash
+$ function param_length() { echo ${#1}; }
+$ param_length 123456
+6
+```
+可以看到，*param_length* 函数使用 `${#1}` 获取到传入第一个参数值的长度。
+
+## ${parameter#word} 和 ${parameter##word}
+查看 man bash 对 `${parameter#word}` 和 `${parameter##word}` 的说明如下：
+> Romove matching prefix pattern. The work is expanded to produce a pattern just as in pathname expansion. If the pattern matches the beginning of the value of parameter, then the result of the expansion is the expanded value of parameter with the shortest matching pattern (the '#' case) or the longest matching pattern (the '##' case) deleted. If parameter is @ or *, the pattern removal operation is applied to each positional parameter in turn, and the expansion is the resultant list. If parameter is an array variable subscripted with @ or *, the pattern removal operation is applied to each member of the array in turn,and the expansion is the resultant list.
+
+即，`${parameter#word}` 在 *parameter* 变量值中，从头开始匹配 *word* 模式对应的内容，如果匹配，则删除最短匹配部分并返回变量剩余部分内容。下面会举例说明，方便理解。
+
+而 `${parameter##word}` 是在 *parameter* 变量值中，从头开始匹配 *word* 模式对应的内容，如果匹配，则删除最长匹配部分并返回变量剩余部分内容。
+
+上面所说的 "最短匹配"、"最长匹配" 主要是针对有多个匹配的情况。如果 *parameter* 变量值中有多个地方匹配 *word* 模式，则 "最短匹配" 是指在第一次匹配时就停止匹配，并返回剩余的内容。而 "最长匹配" 会一直匹配到最后一次匹配为止，才返回剩余的内容。
+
+这里的 *word* 模式可以使用通配符进行扩展，注意不是用正则表达式。
+
+**注意**：上面所说的 "从头开始匹配" 是指把 *parameter* 变量值跟 *word* 模式从头开始比较，而不是在
+*parameter* 变量值中任意匹配 *word* 模式。举例说明如下：
+```bash
+$ value="This/is/a/test/string"
+$ echo ${value#This}
+/is/a/test/string
+$ echo ${value#test}
+This/is/a/test/string
+$ echo ${value#*test}
+/string
+```
+上面先定义了一个 *value* 变量，然后获取 `${value#This}` 的值。这个参数扩展表示在 *value* 变量值中从头开始匹配 "This" 字符串，如果匹配，则删除 "This" 字符串，返回 *value* 变量值剩余部分内容。这里能够匹配，所以去掉了 "This" 字符串，打印 "/is/a/test/string"。
+
+但是 `echo ${value#test}` 的打印结果跟 *value* 变量值完全一样，即没有匹配到中间的 "test" 字符串，最短匹配为空，没有删除任何字符串。
+
+使用 `${value#*test}` 才能匹配到 *value* 变量值中间的 "test" 字符串，并删除所有匹配的内容，打印 "/string"。这里用 `*` 通配符匹配在 "test" 前面的任意字符，从而匹配 *value* 变量值开头的部分。
+
+**注意**：`${parameter##word}` 是操作 *parameter* 变量值，而不是操作 "parameter" 字符串，所以想要过滤某个字符串的内容，需要先把字符串赋值给某个变量，再用变量名来进行参数扩展，直接把字符串内容写在大括号 `{}` 里面不起作用，即使用引号把字符串括起来也不行：
+```bash
+$ echo ${This/is/a/test/string#This}    # 执行不会报错，但是输出为空
+
+$ echo ${"This/is/a/test/string"#This}  # 添加引号会执行报错
+-bash: ${"This/is/a/test/string"#This}: bad substitution
+$ echo ${'This/is/a/test/string'#This}
+-bash: ${'This/is/a/test/string'#This}: bad substitution
+```
+
+`${parameter##word}` 的用法跟 `${parameter#word}` 类似，也是删除匹配的内容，返回剩余的内容。区别在于，`${parameter#word}` 是匹配到第一个就停止，而 `${parameter##word}` 是匹配到最后一个才停止。以上面的 *value* 变量为例，说明如下：
+```bash
+$ echo ${value#*is}
+/is/a/test/string
+$ echo ${value##*is}
+/a/test/string
+```
+可以看到，`echo ${value##*is}` 打印的是 "/is/a/test/string"，`*is` 匹配到 "This" 这个字符串，没有再匹配后面的 "is" 字符串，所以只删除了 "This" 字符串。而 `echo ${value##*is}` 打印的是 "/a/test/string"，它先匹配到 "This"，但还是继续往后匹配，最后一个匹配是 "is" 字符串，所以删掉了 "This/is" 字符串。
+
+**再次强调**，上面说的 "匹配" 是从头开始匹配，而不是部分匹配，它是要求 *word* 模式扩展之后得到的字符串从头开始符合 *parameter* 变量值的内容，而不是在 *parameter* 变量值里面查找 *word* 模式。例如下面的例子：
+```bash
+$ value="This/is/a/test/string./This/is/a/new/test"
+$ echo ${value##*This}
+/is/a/new/test.
+$ echo ${value##This}
+/is/a/test/string./This/is/a/new/test
+```
+可以看到，*value* 变量值有两个 "This" 字符串。`echo ${value##*This}` 匹配到了最后一个 "This" 字符串，但是 `echo ${value##This}` 还是只匹配到开头的 "This" 字符串，它不是在 *value* 变量值里面查找 "This" 这个子字符串，而是把 "This" 字符串和 *value* 变量值从头开始、逐个字符进行匹配。而在 `echo ${value##*This}` 表达式中，`*This` 经过通配符扩展后，在 *value* 变量值中有几种形式的匹配，例如从头匹配到 "This" 字符串、匹配到 "This/is/a/test/string./This" 字符串，去掉最长匹配后，打印为 "/is/a/new/test."。注意体会其中的区别。
+
+**注意**：在 bash 的参数扩展中，数字属于 *positional parameters*，可以用数字来引用传入脚本或者函数的参数，用在当前表达式时，就表示获取所传入参数的字符串长度。例如 `$1` 对应传入的第一个参数，那么 `${#1}` 对应所传入第一个参数的字符串长度。具体举例如下：
+```bash
+$ function param_tail() { echo ${1##*test}; }
+$ param_tail "This is a test string."
+string.
+```
+可以看到，*param_tail* 函数使用 `${1##*test}` 在传入的第一个参数中匹配 "test" 字符串、以及它前面的任意字符，请去掉匹配的内容，只保留后面的部分。
+
+如果所给的 *parameter* 是一个数组变量且所给下标是 `@` 或者 `*`，那么会对每一个数组元素都进行匹配删除操作，最后得到的扩展结果是合成后的列表。当需要对多个字符串进行相同处理时，就可以把它们放到一个数组里面，然后使用这两个表达式来进行处理。下面的例子从多个文件路径中过滤出各自的文件名，去掉了目录路径部分：
+```bash
+$ arrays=("src/lib/utils.c" "src/main/main.c" "include/lib/utils.h")
+$ echo ${arrays[@]##*/}
+utils.c main.c utils.h
+```
+可以看到，`${arrays[@]##*/}` 表达式使用 `arrays[@]` 来指定操作 *arrays* 数组的每一个元素，用 `*/` 来匹配目录路径的 `/` 字符，且在该字符前面可以有任意多的其他字符，用 `##` 指定进行最长匹配，从而会匹配到最后一个 `/` 字符为止，最终，该表达式删除匹配的部分，返回剩余的内容，也就是返回文件名自身。
+
+## ${parameter%word}, ${parameter%%word}
+查看 man bash 对 `${parameter%word}` 和 `${parameter%%word}` 的说明如下：
+> Remove matching suffix pattern. The word is expanded to produce a pattern just as in pathname expansion. If the pattern matches a trailing portion of the expanded value of parameter, then the result of the expansion is the expanded value of parameter with the shortest matching pattern (the '%' case) or the longest matching pattern (the '%%' case) deleted. If parameter is @ or *, the pattern removal operation is applied to each positional
+parameter in turn, and the expansion is the resultant list. If parameter is an array variable subscripted with @ or *, the pattern removal operation is applied to each member of the array in turn, and the expansion is the resultant list.
+
+即，`${parameter%word}` 匹配 *parameter* 变量值的后缀部分，从后往前匹配 *word* 模式对应的内容，如果匹配，则删除最短匹配部分并返回变量剩余部分内容。所谓的 "最短匹配" 是指从 *parameter* 变量值的末尾开始，从后往前匹配，一匹配到就结束匹配。下面会举例说明，方便理解。
+
+而 `${parameter%%word}` 匹配 *parameter* 变量值的后缀部分，从后往前匹配 *word* 模式对应的内容，如果匹配，则删除最长匹配部分并返回变量剩余部分内容。所谓的 "最长匹配" 是指从 *parameter* 变量值的末尾开始，从后往前匹配，一直匹配到最后一次匹配为止。
+
+这里的 *word* 模式可以使用通配符进行扩展，注意不是用正则表达式。
+
+前面说明的 `${parameter#word}` 是从变量值中删除匹配的前缀部分，保留后面剩余的内容。而 `${parameter%word}` 相反，是从变量值中删除匹配的后缀部分，保留后面剩余的内容。具体举例说明如下：
+```bash
+$ value="This/is/a/test/string./This/is/a/new/test"
+$ echo ${value%test}
+This/is/a/test/string./This/is/a/new/
+$ echo ${value%%test}
+This/is/a/test/string./This/is/a/new/
+$ echo ${value%%test*}
+This/is/a/
+$ echo ${value%is*}
+This/is/a/test/string./This/
+$ echo ${value#*is}
+/is/a/test/string./This/is/a/new/test
+```
+可以看到，`${value%test}` 在 *value* 变量值中，从后往前匹配到 "test" 字符串，删除匹配的内容，获取到前面剩余的部分。而 `${value%%test}` 获取到的值跟 `${value%test}` 一样，因为该表达式是从末尾开始逐字匹配，所以不会往前匹配到第二个 "test" 字符串，只匹配了末尾的 "test" 字符串。
+
+如果要往前匹配到第二个 "test" 字符串，可以使用 `*` 通配符，`${value%%test*}` 表示从后往前匹配，直到最后一个 "test" 模式才停止。
+
+由于 `${parameter%word}` 表达式是从后往前匹配，所以 `*` 通配符要写在 *word* 模式的后面，才能匹配到中间的内容，如 `${value%is*}` 的输出结果所示。而 `${parameter#word}` 是从前往后匹配，所以 `*` 通配符要写在 *word* 模式的前面，才能匹配到中间的内容，如 `${value#*is}` 的输出结果所示。
+
+## ${parameter^pattern}, ${parameter^^pattern}, ${parameter,pattern}, ${parameter,,pattern}
+查看 man bash 对 `${parameter^pattern}, ${parameter^^pattern}, ${parameter,pattern}, ${parameter,,pattern}` 的说明如下：
+> Case modification. This expansion modifies the case of alphabetic characters in parameter. The pattern is expanded to produce a pattern just as in pathname expansion. The ^ operator converts lowercase letters matching pattern to uppercase; the , operator converts matching uppercase letters to lowercase. The ^^ and ,, expansions convert each matched character in the expanded value;	the ^ and , expansions match and convert only the first character in the expanded value. If pattern is omitted, it is treated like a ?, which matches every character. If parameter is @ or *, the case modification operation is applied to each positional parameter in turn, and the expansion is the resultant list. If parameter is an array variable subscripted with @ or *, the case modification operation is applied to each member of the array in turn, and the expansion is the resultant list.
+
+即，这四个表达式会在 *parameter* 变量值中匹配 *pattern* 模式，并对匹配的字符进行大小写转换：
+- `^` 操作符把小写字母转换为大写，且只转换开头的第一个字符
+- `,` 操作符把大写字母转换为小写，且只转换开头的第一个字符
+- `^^` 操作符把小写字母转换为大写，会转换每一个匹配的字符
+- `,,` 操作符把大写字母转换为小写，会转换每一个匹配的字符
+
+这里的 *pattern* 模式可以使用通配符进行扩展，注意不是用正则表达式。
+
+**注意**：`^` 和 `,` 不是转换第一个匹配到的字符，而是只转换 *parameter* 变量值的首字符。所给的 *pattern* 模式必须和 *parameter* 变量值的首字符匹配才会转换，不会转换字符串中间的字符。举例说明如下：
+```bash
+$ value="This Is a Test String."
+$ echo ${value^t}
+This Is a Test String.
+$ echo ${value^^t}
+This Is a TesT STring.
+$ echo ${value,T}
+this Is a Test String.
+$ echo ${value,,T}
+this Is a test String.
+```
+可以看到，使用 `${value^t}` 不会把 *value* 变量值中间小写的 `t` 字符换行为大写，因为这个表达式只匹配和转换 *value* 变量值的首字符，*value* 变量值并不是以小写字母 `t` 开头，不做转换。而 `${value^^t}` 表达式会匹配 *value* 变量值中的每一个小写字母 `t`，并转换为大写，所以输出结果里面不再有小写的 `t` 字符。
+
+类似的，`${value,T}` 表示把 *value* 变量值开头的大写 `T` 转换为小写的 `t`，`${value,,T}` 表示把 *value* 变量值所有的大写 `T` 转换为小写的 `t`。
+
+如果省略 *pattern* 模式，则表示匹配任意字符，但并不表示会转换所有字符。`^` 和 `,` 操作符还是只转换首字符。以上面的 *value* 变量值举例如下：
+```bash
+$ echo ${value^}
+This Is a Test String.
+$ echo ${value^^}
+THIS IS A TEST STRING.
+$ echo ${value,}
+this Is a Test String.
+$ echo ${value,,}
+this is a test string.
+```
+可以看到，`${value^}` 只会把 *value* 变量值首字符变成大写，由于原本就是大写，所以输出结果跟 *value* 值一样。`${value^^}` 把所有字符都转换为大写。`${value,}` 把*value* 变量值首字符变成小写。`${value,,}` 把所有字符都转换为小写。
+
+**注意**：如果要匹配多个字符，要用方括号 `[]` 把字符串括起来，进行 pathname expansion，才会得到多个可匹配的字符。直接把 *pattern* 模式写成字符串并不能匹配该字符串中的每一个字符。以上面的 *value* 变量值举例如下：
+```bash
+$ echo ${value,TI}
+This Is a Test String.
+$ echo ${value,,TI}
+This Is a Test String.
+$ echo ${value,,[TI]}
+this is a test String.
+$ echo ${value,[TI]}
+this Is a Test String.
+```
+可以看到，当所给模式写为 `TI` 时，无论是使用 `,` 还是 `,,` ，都不能把大写的 `T` 和 `I` 转换为小写。`${value,TI}` 甚至都不能转换开头的 `T` 字符。而写为 `${value,,[TI]}` 就会把所有大写的 `T` 和 `I` 都转换为小写。`[TI]` 就是 pathname expansion 的一种写法，表示匹配方括号 `[]` 里面的每一个字符，基于字符匹配，不是基于字符串匹配。写为 `${value,[TI]}` 表示把首字符 `T` 或者首字符 `I` 转换为小写，只匹配首字符。
+
+关于 pathname expansion 的具体写法可以查看 man bash 的 *Pathname Expansion* 部分。最常见的就是用 `*` 通配符匹配零个或多个任意字符，用 `?` 匹配任意单个字符。上面说明中提到，如果省略 *pattern* 模式，就相当于写为 `?`。即 `${parameter^^}` 等价于 `${parameter^^?}`。
+
+## ${parameter/pattern/string}
+查看 man bash 对 `${parameter/pattern/string}` 的说明如下：
+> Pattern substitution. The pattern is expanded to produce a pattern just as in pathname expansion. Parameter is expanded and the longest match of pattern against its value is replaced with string. If pattern  begins with  /, all matches of pattern are replaced with string. Normally only the first match is replaced. If pattern begins with #, it must match at the beginning of the expanded value of parameter. If pattern begins with %, it must match at the end of the expanded value of parameter. If string is null, matches of pattern are deleted and the / following pattern may be omitted. If parameter is @ or *, the substitution operation is applied to each positional parameter in turn, and the expansion is the resultant list. If parameter is an array variable subscripted with @ or *, the substitution operation is applied to each member of the array in turn, and the expansion is the resultant list.
+
+即，`${parameter/pattern/string}` 表达式可以替换 *parameter* 变量值的字符串。所给的 *pattern* 模式会按照文件名扩展 (pathname expansion) 的方式来扩展，然后对 *parameter* 变量值进行扩展，其值中最长匹配 *pattern* 的部分会被替换成 *string* 指定的字符串。如果 *pattern* 模式开始于 `/`，所有匹配 *pattern* 模式的地方都被替换成 *string* 字符串，通常仅仅替换第一个匹配的地方。如果 *pattern* 模式开始于 `#`，它必须从头开始匹配 *parameter* 变量值。如果 *pattern* 模式开始于 `%`，它必须从后往前匹配  *parameter* 变量值。如果 *string* 字符串是空，匹配 *pattern* 模式的地方会被删除，且跟在 *pattern* 模式之后的 `/` 字符可以省略。具体举例说明如下：
+```bash
+$ value="This is a test string. This is a new test"
+$ echo ${value/test/TEST}
+This is a TEST string. This is a new test
+$ echo ${value//test/TEST}
+This is a TEST string. This is a new TEST
+$ echo ${value/#test/TEST}
+This is a test string. This is a new test
+$ echo ${value/#This/THIS}
+THIS is a test string. This is a new test
+$ echo ${value/%test/TEST}
+This is a test string. This is a new TEST
+$ echo ${value/test}
+This is a string. This is a new test
+$ echo ${value//test}
+This is a string. This is a new
+```
+可以看到，在 `${value/test/TEST}` 表达式中，*value* 变量值是要被替换的原始字符串，*test* 是要被替换的模式，且只替换第一个出现的 "test" 字符串，不会替换所有的 "test" 字符串，*TEST* 是替换之后的内容，最终输出的结果是把 *value* 变量值中的第一个 "test" 字符串替换成了 "TEST"，第二个 "test" 字符串没有被替换。
+
+`${value//test/TEST}` 表达式的 "/test" 模式以 `/` 开头，表示替换所有出现的 "test" 字符串，输出结果所有的 "test" 字符串都替换成了 "TEST"。
+
+`${value/#test/TEST}` 表达式的 "#test" 模式以 `#` 开头，表示要从 *value* 变量值的第一个字符开始匹配，由于 *value* 变量值不是以 "test" 开头，所以匹配不到，并没有做替换。要使用 `${value/#This/THIS}` 来把 *value* 变量值开头的 "This" 替换成 "THIS"。`${value/%test/TEST}` 表达式的情况类似，要求从 *value* 变量值的末尾往前匹配 "test" 字符串，这两者都是从最后一个字符往前开始匹配。
+
+`${value/test}` 表达式没有提供替换后的 *string* 参数，表示从 *value* 变量值中删除第一个出现的 "test" 字符串。`${value//test}` 表达式的 "/test" 模式以 `/` 开头，表示从 *value* 变量值中删除所有出现的 "test" 字符串。
+
+上面提到 "最长匹配" 部分会被替换，所谓的 "最长匹配" 是指被 *pattern* 模式括起来的最长部分，常见于用通配符匹配多个字符形成嵌套的情况，举例如下：
+```bash
+$ value="This is a |test string|new test|, check it"
+$ echo ${value/|*|/NEW STRING}
+This is a NEW STRING, check it
+$ echo ${value/|*|}
+This is a , check it
+```
+可以看到，所给的匹配模式是 `|*|`，使用 `*` 通配符来匹配在两个 `|` 之间的任意字符串。在所给的 *value* 变量值里面，"|test string|"、"|test string|new test|" 这两种形式都匹配这个模式，实际被替换的是最后一种，也就是最长匹配。由于该模式没有以 `/` 开头，只处理第一个匹配的地方，所以 "|new test|" 不会被匹配到。
+
+即，当 *pattern* 模式的扩展结果是不定长的字符串时，它会有一个前缀部分、中间变长部分、后缀部分。那么最长匹配是从前缀部分开始匹配，一直到最后一个匹配的后缀部分为止，而不是遇到第一个匹配的后缀部分就停止，中间变成部分可以包含多个前缀部分和后缀部分。下面再举例说明如下：
+```bash
+$ value="This is a test string, first check it"
+$ echo ${value/t*st}
+This is a check it
+```
+可以看到，在所给的 *value* 变量值里面，`t*st` 模式的后缀部分 "st" 匹配到了 "first" 字符串后面的 "st"，而不是匹配到 "test" 字符串的 "st"，取最长匹配的部分。
