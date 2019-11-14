@@ -1,6 +1,6 @@
 # 描述 find 命令的使用
 
-在 Linux 命令中，`find` 是比较复杂难用的命令。使用该命令搜索文件时，常常会发现找了一些例子能用，但自己稍微修改一些条件，就搜不到想要的结果。下面会以一些实例来说明使用 `find` 命令时的关键要点和注意事项，解释清楚各个条件能够工作、或者不能工作的原因。
+在 Linux 命令中，`find` 是比较复杂难用的命令。使用该命令搜索文件时，常常发现自己找了一些例子能用，但稍微改一下条件，就搜不到想要的结果。下面会以一些实例来说明使用 `find` 命令的关键要点和注意事项，解释清楚各个条件能够工作、或者不能工作的原因。
 
 # find 命令格式
 要使用一个命令，首先要了解命令的格式，知道要提供什么参数、参数作用是什么。查看 man find 对该命令的说明如下：
@@ -18,8 +18,8 @@ find [-H] [-L] [-P] [-D debugopts] [-Olevel] [path...] [expression]
 
 下面具体说明 `find` 命令格式各个部分的含义：
 - `[-H] [-L] [-P] [-D debugopts] [-Olevel]` 这部分属于命令选项，比较少用到，这里不做说明。
-- `[path...]` 该参数指定要查找哪个目录，可以同时提供多个目录名，用空格隔开，如果没有提供该参数，默认查找当前目录、及其子目录。也可以提供文件名，只会在当前目录下查找该文件，不在子目录中查找。
-- `[expression]` 该参数指定评估表达式，可以提供多个表达式，不同表达式之间要用 *operator* 操作符来分割开，如果表达式之间没有提供操作符，默认会用 -and 操作符。表达式有 *options*、*tests*、*actions* 三种类型。如果不提供该参数，默认使用 `-print` 表达式，也就是打印出所给的文件名。参考上面说明，表达式参数要求以 `-`、`(`、或者 `!` 开头，以便区分开前面的目录参数。
+- `[path...]` 该参数指定要查找哪个目录，可以同时提供多个目录名，用空格隔开，如果没有提供该参数，默认查找当前目录、及其子目录。也可以提供文件名，只在当前目录下查找该文件，不会在子目录中查找。
+- `[expression]` 该参数指定评估表达式，可以提供多个表达式，不同表达式之间要用 *operator* 操作符来分隔开，如果表达式之间没有提供操作符，默认会用 -and 操作符。表达式有 *option*、*test*、*action* 三种类型。如果不提供该参数，默认使用 `-print` 表达式，也就是打印出所给的文件名。参考上面说明，表达式参数要求以 `-`、`(`、或者 `!` 开头，以便区分开前面的目录参数。注意，在 bash 中要用 `\(` 来对 `(` 进行转义。
 
 关于 `find` 命令的说明，也可以查看 GNU find 的在线帮助手册 <https://www.gnu.org/software/findutils/manual/html_mono/find.html>，这里面的说明比 man find 详细，并提供了不少例子，可供参考。
 
@@ -38,7 +38,7 @@ $ find
 ./tests/bre.tests
 ./Makefile.am
 ```
-可以看到，在 shell 的当前工作目录下执行 `find` 命令，不提供任何参数，会打印出当前目录、及其子目录下的所有文件名，包括了目录名。
+可以看到，在 shell 的当前工作目录下执行 `find` 命令，不提供任何参数，会打印出当前目录、及其子目录下的所有文件名，包括目录名。
 
 可以在 `find` 命令后面提供目录名，指定要查找哪个目录：
 ```bash
@@ -178,14 +178,14 @@ The above command will not print ./src/emacs among its list of results. This how
 
 这里举的例子就类似于我们现在讨论的例子，里面也解释了查找时能够忽略目录的原因，可供参考。
 
-前面提到，`find` 命令会把搜索到的每一个文件名都依次作为参数传递给后面的表达式进行评估，如果传递到`-prune` 表达式的文件名是一个目录，那么不会进入该目录进行查找。这个表达式的返回值总是 true。举例说明如下：
+前面提到，`find` 命令会把搜索到的每一个文件名都依次作为参数传递给后面的表达式进行评估，如果传递到 `-prune` 表达式的文件名是一个目录，那么不会进入该目录进行查找。这个表达式的返回值总是 true。举例说明如下：
 ```bash
 $ find . -path \*test\* -prune
 ./tests
 $ find . -path \*test\* -o -prune
 .
 ```
-前面例子提到，`find . -path \*test\*` 会匹配到 `./tests` 目录和该目录下的 `./tests/bre.tests` 文件。而这里的 `find . -path \*test\* -prune` 只匹配到 `./tests` 目录，没有进入该目录下进行查找，就是受到了 `-prune` 表达式的影响。
+前面例子提到，`find . -path \*test\*` 会匹配到 `./tests` 目录和该目录下的 `./tests/bre.tests` 文件。而这里的 `find . -path \*test\* -prune` 只匹配到 `./tests` 目录，没有进入该目录下查找文件，就是受到了 `-prune` 表达式的影响。
 
 基于前面的说明，`find . -path \*test\* -prune` 相当于 `find . -path \*test\* -and -prune -and print`。对于不匹配 `\*test\*` 模式的文件名，`-path \*test\*` 表达式返回 false，不往下处理，不打印不匹配的文件名。对于匹配 `\*test\*` 模式的文件名，`-path \*test\*` 表达式返回 true，会往下处理，遇到 `-prune` 表达式，该表达式总是返回 true，继续往下处理 `-print` 表达式，打印出该目录名，由于 `-prune` 表达式指定不进入对应的目录，所以没有查找该目录下的文件，没有查找到 `./tests/bre.tests` 文件。
 
@@ -226,7 +226,7 @@ True; print the entire file name on the standard output, followed by a newline.
 
 如果没有提供除了 `-prune` 之外的其他 *action* 类型表达式，`find` 默认会加上 `-print` 表达式，并用 `-and` 来连接前面的表达式。这个行为可能会带来一些误解，认为 `find` 命令总是会打印搜索到、或者匹配到的文件名，但有时候搜索到、或者匹配到的文件名反而不打印，例如上面 `find . -path ./tests -o -print` 的例子。
 
-要消除这个误解，就一定要清楚地认识到，`find` 命令想要打印文件名，就必须执行到 `-print` 表达式、或者其他可以打印文件名的表达式。即，要执行可以打印文件名的表达式才会打印文件名，否则不会打印。至于是匹配特定模式的文件名才会打印，还是不匹配特定模式的文件名才会打印，取决于各个表达式、包括操作符组合表达式的判断结果，看是否会执行到可以打印文件名的表达式。
+要消除这个误解，就一定要清楚地认识到，`find` 命令想要打印文件名，就必须执行到 `-print` 表达式、或者其他可以打印文件名的表达式。即，要执行可以打印文件名的表达式才会打印文件名，否则不会打印。至于是匹配特定模式的文件名会打印，还是不匹配特定模式的文件名才会打印，取决于各个表达式、包括操作符组合表达式的判断结果，看是否会执行到可以打印文件名的表达式。
 
 ## 总结
 结合上面的说明，对 `find . -path ./tests -and -prune -o -print` 命令在查找时能够忽略 `./tests` 目录底下文件的原因总结如下：
@@ -234,65 +234,136 @@ True; print the entire file name on the standard output, followed by a newline.
 - `-path ./tests` 指定传递下来的文件名要完全匹配 `./tests` 这个字符串。对于不匹配的文件名，该表达式返回 false，那么 `-path ./tests -and -prune` 这个组合表达式会返回 false，且没有评估后面的 `-prune` 表达式。由于 `-and` 操作符优先级高于 `-o` 操作符，该组合表达式再跟后面的 `-o -print` 形成新的组合表达式，它返回 false，会往下执行 `-print` 表达式，从而打印出来不匹配的文件名。
 - 对于匹配 `-path ./tests` 模式的目录名，该表达式返回 true，`-path ./tests -and -prune` 组合表达式会评估后面的 `-prune` 表达式，指定不进入匹配的目录名查找底下的文件，这个例子里面就是不进入 `./tests` 目录，所以查找时会忽略该目录底下的文件，但还是会查找到 `./tests` 目录名自身。
 - 对于 `./tests` 这个目录名，由于 `-prune` 返回 true，`-path ./tests -and -prune` 组合表达式会返回 true，基于 `-o` 操作符的特性，不执行后面的 `-print` 表达式，所以没有打印这个目录名。
+- 最后的 `-o -print` 是必要的，如果不加这两个参数，将不会打印不匹配 `./tests` 模式的文件名。
 - 基于这几条分析，这个命令最终打印的结果里面，即不包含 `./tests` 这个目录名，也不包含它底下的文件名。
 
-总的来说，使用 `find` 命令查找时，如果要忽略一个目录，可以用类似 `find . -path ./tests -prune -o -print` 这样的写法，理解了上面对该命令的解释后，想要忽略其他模式的目录，应该就比较容易了。
+总的来说，使用 `find` 命令查找时，如果要忽略一个目录，可以用类似 `find . -path ./tests -prune -o -print` 这样的写法，理解了上面对该命令的说明后，想要忽略其他模式的目录，应该就比较容易了。
 
-## TODO: 忽略多个目录的写法
-find . \( -path "./test" -o -path "./out" \) -prune
+## 忽略多个目录的写法
+如果想要忽略多个目录，要使用 `-o` 操作符把多个  `-path pattern` 表达式组合起来。基于上面例子的目录结构，举例如下：
+```bash
+$ find . \( -path ./tests -o -path ./src \) -prune -o -print
+.
+./Makefile.am
+```
+可以看到，`find . \( -path ./tests -o -path ./src \) -prune -o -print` 命令打印的查找结果里面，没有 `./src`、`./tests` 这两个目录、及其底下文件，也就是忽略了这两个目录。
 
-# TODO: fix this backup
-一. 操作运算符
-(1) expr1 -o expr2
-    Or; expr2 is not evaluated if expr1 is true. 即这是一个或操作.
+基于 `-o` 操作符的特性，`-path ./tests -o -path ./src` 组合表达式在不匹配 `./tests` 模式时，会再尝试匹配 `./src` 模式，两个模式都不匹配，才会返回 false。
 
-二. 查找时跳过一个或多个目录
-find命令可以使用-path pattern -prune来忽略一个或多个目录.例如:
-(1)find . -path ./test -prune 将会忽略当前目录的test目录.
-(2)find . \( -path "./test" -o -path "./out" \) -prune 将忽略当前目录下
-的test目录和out目录. 注意,在"\("和"-path"之间一定要有空格,否则会报错.
-(3)这个-path选项需要指定具体的路径,而不是递归忽略,例如存在 ./a/test/a/,
-./b/test/b, ./c/test/c 三个目录,如果想要全部忽略test目录,只写为-path ./test
-是不行的,只能使用正则表达式进行模糊匹配,例如-path "*test".
+由于 `-and` 操作符优先级高于 `-o` 操作符，所以要用小括号 `()` 把 `-path ./tests -o -path ./src` 组合表达式括起来，形成一个独立的表达式，再跟后面的 `-prune` 组合成新的表达式。小括号在 bash 中有特殊含义，所以要加 `\` 转义字符，写成 `\(`，避免 bash 对小括号进行特殊处理。
 
-三. 查找指定类型的文件
-find在查找时,可以使用 -name pattern 来查找指定类型的文件.例如:
-(1)find . -name "*.c" 将会在当前目录下查找 ".c" 类型的文件.
-(2)find . -name "*.c" -o -name "*.h" 将会在当前目录下查找".c"和".h"类型的
-文件,实际上就是通过-o来执行或操作,从而查找多种类型的文件.此时,要注意一点,
-如果希望对查找到的内容做一些格式化打印操作,例如find . -name "*.c" -printf
-"%f\t%p\n",那么当查找多个类型文件时,每个-name后面就要跟着-printf,类似于
-find . -name "*.c" -printf "%f\t%p\n" -o -name "*.h" -printf "%f\t%p\n",不
-能写为find . -name "*.c" -o -name -printf "%f\t%p\n",这种写法只会对找到的
-".h"类型文件做格式化输出.这是因为-o把两个表达式分隔开,此时-name "*.c"和
--name "*.h" -printf "%f\t%p\n"是两个独立的表达式,-printf语句对前面的-name
-"*.c"不起作用.
+**注意**：在 `\(` 和 `\)` 前后要用空格隔开，这两个是单独的操作符，如果不加空格，会组合成其他名称。
 
-还可以使用 -regex pattern -type f 选项来查找指定类型的文件. "-type f" 表示
-查找regular file,即普通文本文件. 对 "-regex pattern" 描述如下:
--regex pattern: File name matches regular expression pattern. This is a
-match on the whole path, not a search. For example, to match a file named
-'./fubar3', you can use the regular expression '.*bar.' or '.*b.*3', but
-not 'f.*r3'.即,pattern中要指定一个完整的路径,比如相对路径的'./'就需要指定.
-例如要在当前目录下递归查找".c", ".h"类型的文件,可以写为:
-    find ./ -regex '.*\.\(c\|h)\)' -type f
-在正则表达式'.*\.\(c\|h\)'中,最开始的".*"就用于指定完整路径,它可以匹配"./",
-"./a", "./b/c/"等等目录.接下来的"\."则是匹配后缀名前面的'.',即".c",".cpp",
-".h"里面的那个'.',最后的\(c\|h)就是要匹配的具体后缀名了.其中, '\' 表示引用,
-即指示shell不对后面的字符做特殊解释,而留给find命令去解释其意义.
+其他表达式的含义和作用可以参考前面例子的说明。如果能够基于这个命令的各个表达式、各个操作符的作用，推导出打印结果，就基本理解 `find` 命令的工作原理了。
 
-四. 输出
-(1) -print 选项. man find手册对该选项描述为:
-print the full file name on the standard output, followed by a newline.
-(2) find使用 -printf format 来进行格式化输出. 注意,-printf does not add a
-newline at the end of the string. 一些转换格式描述如下:
-%f: File's name with any leading directories removed (only the last element)
-%p: File's name
+# 匹配特定模式的文件名
+上面说明的 `-path pattern` 表达式要求完全匹配整个目录路径，如果想要只匹配文件名，不包含目录路径部分，可以使用 `-name pattern` 表达式。这是一个 *test* 类型表达式，GNU find 在线帮助手册对该表达式的说明如下：
+> **Test: -name pattern**  
+True if the base of the file name (the path with the leading directories removed) matches shell pattern pattern. As an example, to find Texinfo source files in /usr/local/doc:  
+`find /usr/local/doc -name '*.texi'`  
+Notice that the wildcard must be enclosed in quotes in order to protect it from expansion by the shell.
 
-五. 指定查找多个目录
-当指定查找多个目录时,直接在find后面写上这么目录的路径即可,不用加上-o、-path等选项.
-例如, find ./src ./res 命令会在src/、res/目录下递归查找所有文件.
-如果还要同时指定忽略这些目录底下的某个子目录,可以再加上-path pathname -prune选项.
-例如, find src res \( -path "*git" -o -path "*test*" \) -prune -o -print
-注意,此时要加上 -o -print 才能打印出来查找到的文件名. 如果不加 -o -print,会打印
-所忽略的目录名,而不是打印所找到的目录名、或者文件名.
+如这个帮助说明所举的例子，一般常用这个表达式来匹配特定后缀名的文件。具体举例如下。
+
+## 匹配单个后缀名
+下面是匹配单个后缀名的例子：
+```bash
+$ find . -name '*.c'
+./src/main.c
+```
+可以看到，`find . -name '*.c'` 命令打印出所有后缀名为 `.c` 的文件名，注意 `*.c` 要用引号括起来，避免 bash 当 `*` 号当成通配符处理。该命令相当于 `find . -name '*.c' -and -print`，只有 `-name '*.c'` 表达式返回为 true 的文件名才会执行到 `-print` 表达式，打印出该文件名。
+
+**注意**：使用 `-name pattern` 表达式并不表示只查找符合 *pattern* 模式的文件，`find` 命令还是会查找出所给目录的所有文件，并把每个文件名依次传给后面的表达式进行评估，只有符合 `-name pattern` 表达式的文件名才会返回 true，才会被打印出来。不符合这个表达式的文件也会被查找到，只是没有打印出来而已。
+
+## 匹配多个后缀名
+下面是匹配多个后缀名的例子：
+```bash
+$ find . -name '*.c' -o -name '*.am'
+./src/main.c
+./Makefile.am
+$ find . \( -name '*.c' -o -name '*.am' \) -and -print
+./src/main.c
+./Makefile.am
+$ find . -name '*.c' -o -name '*.am' -and -print
+./Makefile.am
+```
+可以看到，`find . -name '*.c' -o -name '*.am'` 命令打印出所有后缀名为 `.c` 和 `.am` 的文件名，该命令相当于 `find . \( -name '*.c' -o -name '*.am' \) -and -print`，而不是相当于 `find . -name '*.c' -o -name '*.am' -and -print`，后者只能打印出后缀名为 `.am` 的文件名。
+
+前面也有说明，`find` 命令会对所有返回为 true 的文件名默认执行 `-print` 表达式，这个返回为 true 是手动提供的整个表达式的判断结果。也就是说手动提供的整个表达式应该会用小括号括起来，组成独立的表达式，再跟默认添加的 `-and -print` 表达式组合成新的表达式，避免直接加上 `-and -print` 后，会受到操作符优先级的影响，打印结果可能不符合预期。
+
+## 重新格式化要打印的文件名信息
+除了使用 `-print` 表达式打印文件名之外，也可以使用 `-printf` 表达式格式化要打印的文件名信息，这是一个 *action* 类型表达式，GNU find 在线帮助手册对该表达式的说明如下：
+> **Action: -printf format**  
+True; print format on the standard output, interpreting ‘\’ escapes and ‘%’ directives.  
+Field widths and precisions can be specified as with the printf C function.  
+Unlike ‘-print’, ‘-printf’ does not add a newline at the end of the string. If you want a newline at the end of the string, add a ‘\n’.
+
+即，`-printf` 表达式使用类似于C语言 *printf* 函数的写法来格式化要打印的信息，支持的一些格式如下：
+- %p  
+File’s name.  
+这个格式包含完整路径的文件名。
+- %f  
+File’s name with any leading directories removed (only the last element).  
+这个格式只包含文件名，会去掉目录路径部分。
+
+**注意**：`-printf` 是 *action* 类型表达式，前面提到，如果提供除了 `-prune` 之外的 *action* 类型表达式，将不会自动添加 `-print` 表达式。加了 `-printf` 表达式将由该表达式来决定打印的文件信息。
+
+使用 `-printf` 表达式的例子如下：
+```bash
+$ find . \( -name '*.c' -o -name '*.am' \) -printf "%f  \t%p\n"
+main.c          ./src/main.c
+Makefile.am     ./Makefile.am
+```
+可以看到，所给 find 命令打印出指定后缀的文件名本身、以及完整路径的文件名。`-name '*.c' -o -name '*.am'` 表达式需要用小括号括起来，组成独立的表达式，如果不加小括号，由于 `-and` 操作符优先级高于 `-o` 操作符，`-name '*.am'` 实际上是跟 `-printf` 表达式组合，后缀名为 `.c` 的文件名无法执行到 `-printf` 表达式，将不会打印这些文件名。
+
+由于 `-printf` 表达式不会在末尾自动加上换行符，想要换行的话，需要在格式字符串里面加上 ‘\n’ 换行符。
+
+# 使用正则表达式匹配完整路径文件名
+在 `find` 命令里面，`-path pattern` 表达式和 `-name pattern` 表达式都是使用通配符来匹配模式，如果想要用正则表达式进行匹配，可以使用 `-regex expr` 表达式，这是 *test* 类型表达式，GNU find 在线帮助手册对该表达式的说明如下：
+> **-regex expr**  
+True if the entire file name matches regular expression expr. This is a match on the whole path, not a search.  
+As for ‘-path’, the candidate file name never ends with a slash, so regular expressions which only match something that ends in slash will always fail.
+
+即，`-regex expr` 表达式用正则表达式匹配完整路径的文件名，包含目录路径部分。
+
+用正则表达式匹配后缀名为 `.c` 文件的例子如下：
+```bash
+$ find . -regex '.*\.c'
+./src/main.c
+$ find . -regex '.*c'
+./src
+./src/main.c
+```
+可以看到，`find . -regex '.*\.c'` 命令只打印出后缀名为 `.c` 的文件名。而 `find . -regex '.*c'` 命令除了打印后缀名为 `.c` 的文件名，还打印了其他的文件名，这个命令的正则表达式不够精确，少了关键的 `\.` 来转义匹配点号 `.` 字符。
+
+在 `.*\.c` 这个正则表达式中，最前面的 `.` 表示匹配任意单个字符，`*` 表示匹配零个或连续多个前面的字符，`\.` 通过转义来表示 `.` 字符自身，`c` 表示字符 *c* 自身，组合起来就是匹配后缀名为 `.c` 的字符串。
+
+而 `.*c` 这个正则表达式匹配最后一个字符为 `c` 的字符串，不管在字符 *c* 前面是否有 `.` 字符，这个不符合后缀名的要求。
+
+下面例子用正则表达式来匹配多个后缀名：
+```bash
+$ find . -regex '.*\.\(c\|am\)'
+./src/main.c
+./Makefile.am
+```
+这个例子同时匹配后缀名为 `.c` 和 `.am` 的文件名。在正则表达式中，`(a|b)` 表示匹配 `a` 或者匹配 `b`。上面的 `\(c\|am\)` 经过转义后，也就是 `(c|am)`，用于匹配 `c` 或者 `am`，这样就比较好理解，不要被转义字符吓到了。
+
+# 匹配特定类型的文件
+在 Linux 中，文件类型可以分为目录 (directory)、文本文件 (regular file)、符号链接 (symbolic link)、socket，等等。`find` 命令可以用 `-type c` 表达式来指定匹配这些类型的文件，这是一个 *test* 类型表达式，GNU find 在线帮助手册对该表达式的说明如下：
+> **Test: -type c**  
+True if the file is of type c:  
+d: directory  
+f: regular file  
+l: symbolic link  
+s: socket
+
+例如，使用 `-type f` 来指定只匹配文本文件：
+```bash
+$ find . -type f
+./src/main.c
+./tests/bre.tests
+./Makefile.am
+```
+可以看到，在打印结果里面，没有看到目录名，只有文本文件名。
+
+**注意**：`-type f` 表达式只表示匹配文本文件，并不表示只查找文本文件，`find` 命令还是会查找出所给目录的所有文件，并把每个文件名依次传给后面的表达式进行评估，只有符合 `-type f` 表达式的文件才会返回 true，才会被打印出来。不符合这个表达式的文件也会被查找到，只是没有打印出来而已。
