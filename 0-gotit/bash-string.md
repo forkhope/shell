@@ -518,7 +518,7 @@ by the 'test' builtin, and may be combined using the following operators:
     EXPR1 && EXPR2    True if both EXPR1 and EXPR2 are true; else false
     EXPR1 || EXPR2    True if either EXPR1 or EXPR2 is true; else false
 ```
-即，`[[` 命令可以使用 `test` 命令的操作符来进行判断。它们之间的一些区别说明如下：
+即，`[[` 命令可以使用 `test` 命令所支持的条件表达式来进行判断。它们之间的一些区别说明如下：
 - 上面提到，`[` 命令要求最后一个参数必须是 `]`，`]` 本身不是一个命令。类似的，`[[` 命令也要求跟 `]]` 同时出现，但是 `]]` 本身也是一个命令，而不是一个参数。所以 `[[ expression ]]` 被称为复合命令 (compound command)。如下面例子所示：
 ```bash
 $ ]
