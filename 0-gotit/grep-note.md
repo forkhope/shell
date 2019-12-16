@@ -109,11 +109,11 @@ alias grep='grep --color=auto'
 ```
 可以看到，bash 设置了 *grep* 字符串为 `grep --color=auto` 命令的别名，执行 `grep` 命令，实际执行的是 `grep --color=auto`，所以能够颜色高亮。可以使用 `\grep` 来指定不使用 `alias` 别名，执行原始的 `grep` 命令，就能看到没有颜色高亮，举例如下：
 > $ grep "string" testfile  
-This is a test <font color=red>string.</font>  
+This is a test <span style="color:red;">string.</span>  
 $ \grep "string" testfile  
 This is a test string.  
 $ \grep --color=auto "string" testfile  
-This is a test <font color=red>string.</font>
+This is a test <span style="color:red;">string.</span>
 
 在这个测试结果中，只有 `\grep "string" testfile` 命令确实没有加 `--color=auto` 选项，打印结果没有颜色高亮匹配到的模式字符串。
 
