@@ -1,9 +1,0 @@
-ps|packages/apps/Settings
-op|out/target/product
-b|frameworks/base
-fr|frameworks/base/core/res/res
-t|frameworks/opt/telephony
-sui|frameworks/base/packages/SystemUI
-dqc|device/qcom/common
-pa|packages/apps
-fs|frameworks/base/services
