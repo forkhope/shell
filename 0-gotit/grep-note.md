@@ -102,12 +102,23 @@ The grep command searches for lines that contain strings that match a pattern. E
 如果想要匹配空行，匹配模式可以写为 `'^$'`，空行只包含一个行末的换行符。如果想要匹配只包含空白字符（空格、或 tab 字符）的行，匹配模式可以写为 `^[[:blank:]]*$`。
 
 # 颜色高亮匹配到的模式字符串
-`grep` 命令默认不会颜色高亮匹配到的模式字符串，需要加上 `--color=auto` 或者 `--color=always` 选项才会进行颜色高亮。在一些 Linux 系统上，执行 `grep` 命令，没有手动加 `--color=auto` 也会看到颜色高亮，是因为 bash 设置了 `alias` 别名，默认已经加上 `--color=auto` 选项，具体如下所示：
+在 Linux 中，`grep` 命令默认不会颜色高亮匹配到的模式字符串。  
+如果想要高亮所匹配的部分，需要加上 `--color=auto` 或者 `--color=always` 选项才会显示颜色高亮。
+
+在一些 Linux 系统上，执行 `grep` 命令，没有手动加 `--color=auto` 也会看到颜色高亮。  
+这是因为 bash 设置了 `alias` 别名，默认已经加上 `--color=auto` 选项。
+
+具体举例说明如下：
 ```bash
 $ alias grep
 alias grep='grep --color=auto'
 ```
-可以看到，bash 设置了 *grep* 字符串为 `grep --color=auto` 命令的别名，执行 `grep` 命令，实际执行的是 `grep --color=auto`，所以能够颜色高亮。可以使用 `\grep` 来指定不使用 `alias` 别名，执行原始的 `grep` 命令，就能看到没有颜色高亮，举例如下：
+可以看到，bash 设置了 *grep* 字符串为 `grep --color=auto` 命令的别名。  
+那么在 bash 中执行 `grep` 命令，实际执行的是 `grep --color=auto`，所以能够颜色高亮。
+
+可以使用 `\grep` 来指定不使用 `alias` 别名，执行原始的 `grep` 命令，就能看到没有颜色高亮。
+
+具体举例说明如下：
 > $ grep "string" testfile  
 This is a test <span style="color:red;">string.</span>  
 $ \grep "string" testfile  
@@ -115,15 +126,24 @@ This is a test string.
 $ \grep --color=auto "string" testfile  
 This is a test <span style="color:red;">string.</span>
 
-在这个测试结果中，只有 `\grep "string" testfile` 命令确实没有加 `--color=auto` 选项，打印结果没有颜色高亮匹配到的模式字符串。
+在这个测试结果中，只有 `\grep "string" testfile` 命令确实没有加 `--color=auto` 选项，打印的匹配结果没有颜色高亮。
 
 查看 man grep 对 `--color` 选项、以及它的取值说明如下：
 > **--color[=WHEN], --colour[=WHEN]**  
-Surround the matched (non-empty) strings, matching lines, context lines, file names, line numbers, byte offsets, and separators (for fields and groups of context lines) with escape sequences to display them in color on the terminal. WHEN is never, always, or auto.
+> Surround the matched (non-empty) strings, matching lines, context lines, file names, line numbers, byte offsets, and separators (for fields and groups of context lines) with escape sequences to display them in color on the terminal.  
+> WHEN is never, always, or auto.
 
-**注意**：在 shell 脚本中使用 `grep` 命令时，由于 shell 脚本默认在非交互模式下执行，不会继承父 shell 的 `alias` 别名，`grep` 命令不会自动加上 `--color=auto` 选项，打印的匹配结果没有颜色高亮。如果想要显示颜色高亮，需要在 shell 脚本的 `grep` 命令后面加上 `--color=auto` 选项。
+一般来说，当指定为 *always*、*auto* 时，可以显示颜色高亮。  
+当指定为 *never* 时，不会显示颜色高亮。  
+如果没有提供 `--color` 选项，默认值就是 *never*，不显示颜色高亮。
 
-如果在 shell 脚本中用 `grep` 命令查找到的结果没有输出到终端，可以不用加 `--color=auto` 选项。
+**注意**：在非交互式 shell 中，默认不能使用 alias 别名。  
+由于 shell 脚本默认运行在非交互式 shell 下，当在 shell 脚本中使用 `grep` 命令时，不会自动在 `grep` 命令后面加上 `--color=auto` 选项，打印的匹配结果没有颜色高亮。
+
+在 shell 脚本中执行 `grep` 命令时，如果想要打印的匹配结果显示颜色高亮，需要在 shell 脚本的 `grep` 命令后面主动加上 `--color=auto` 选项。
+
+查看 man bash 里面对非交互式 shell 不能使用 alias 别名的说明如下：
+> Aliases are not expanded when the shell is not interactive, unless the expand_aliases shell option is set using shopt.
 
 # 使用 -r 选项指定查找所给目录、及其子目录的所有文件
 在 `grep` 命令的 `-r` 选项后面可以提供一个目录名，指定在所给目录、及其子目录的所有文件中进行匹配。查看 man grep 对 `-r` 选项的说明如下：
