@@ -4,13 +4,13 @@
 
 # Shell脚本默认是在非交互模式下执行,此时不会继承父shell的alias别名,
 # 那么grep命令不会带--color=auto选项,搜索结果没有颜色高亮.
-# 为了显示颜色高亮,下面定义 GREP 变量来加上 --color=auto 选项.
+# 为了显示颜色高亮,下面定义 GREP_COLOR 变量来加上 --color=auto 选项.
 # 要说明的是,交互式shell就是在终端上执行,shell等待你的输入来作为命令,
 # 并执行提交的命令;非交换式shell一般是以shell脚本方式执行,读取脚本
 # 文件中的命令并执行它们,不需要用户输入要执行的命令.当然,脚本里面有些
 # 命令可能会让用户输入内容(例如read命令)或者做个选择(例如select命令),
 # 这是命令自身的功能,但是这个命令本身不是用户输入的.
-GREP="grep --color=auto"
+GREP_COLOR="grep --color=auto"
 # 某些厂商可能会修改repo源码,并命名为其他名字,为了提升脚本的可移植性,
 # 下面定义 REPO 变量来表示repo命令.如有需要,只需要改动这里面的值即可.
 REPO="repo"
@@ -100,7 +100,7 @@ repo_status_filter()
     # 命令,如果不加双引号,这个管道会被当成execute_command函数和grep之间的管
     # 道,导致execute_command内部用echo命令打印的信息会被grep过滤掉而不显示.
     execute_command \
-        "${REPO} status -j ${jobs} | ${GREP} -B 1 -E '^\s\-\-|^\s\-m|^\s\-d'"
+        "${REPO} status -j ${jobs} | ${GREP_COLOR} -B 1 -E '^\s\-\-|^\s\-m|^\s\-d'"
 }
 
 # 使用 repo forall 命令对符合条件的git仓库执行reset、pull的动作,
@@ -139,7 +139,7 @@ repo_forall_reset_pull()
         git rev-parse --abbrev-ref ${branch_name}@{upstream} &&\
         git reset --hard &&\
         git pull --stat --no-tags $(git remote) ${branch_name}' |\
-        ${GREP} -E 'project|\|' | ${GREP} -B 1 '|'
+        grep -E 'project|\|' | ${GREP_COLOR} -B 1 '|'
 }
 
 # 将 远端指定分支 拉取到 本地指定分支 上:
@@ -228,7 +228,7 @@ repo_status_filter_custom()
     # repo_status_filter | grep -v '^\-\-' > "${status_temp_file}"
     # 用\换行时,换行后的多个空格会被保留,那么execute_command打印命令
     # 命令时会看到多个空格,为了避免这种情况,下面的grep -v命令写到行首.
-    execute_command "${REPO} status -j1|${GREP} -B1 -E '^\s\-\-|^\s\-m|^\s\-d'|\
+    execute_command "${REPO} status -j1 | grep -B1 -E '^\s\-\-|^\s\-m|^\s\-d'|\
 grep -v '^\-\-' > ${status_temp_file}"
 
     while read statusline; do

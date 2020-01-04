@@ -624,7 +624,7 @@ utils.c main.c utils.h
 用 `##` 指定进行最长匹配，从而会匹配到最后一个 `/` 字符为止。  
 最终，该表达式删除匹配的部分，返回剩余的内容，也就是返回文件名自身。
 
-## ${parameter%word}, ${parameter%%word}
+## ${parameter%word} 和 ${parameter%%word}
 查看 man bash 对 `${parameter%word}` 和 `${parameter%%word}` 的说明如下：
 > Remove matching suffix pattern.  
 > The word is expanded to produce a pattern just as in pathname expansion. If the pattern matches a trailing portion of the expanded value of parameter, then the result of the expansion is the expanded value of parameter with the shortest matching pattern (the '%' case) or the longest matching pattern (the '%%' case) deleted.  
