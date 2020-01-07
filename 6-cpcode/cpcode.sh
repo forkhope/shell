@@ -1,8 +1,8 @@
 #!/bin/bash
-# 在整理代码修改前后时,需要拷贝代码到after和before目录下,该脚本就用于
-# 自动拷贝修改前后的代码到各自的目录下.它会在当前工作目录下新建一个
-# "0-代码修改"的目录,然后根据操作选项(-a或-b),又在"0-代码修改"目录里面
-# 新建一个after或者before目录,然后读取所给的文件来获得要拷贝的文件信息,
+# 在整理代码修改前后时,需要拷贝代码到after和before目录下,方便对比.
+# 该脚本用于自动拷贝Android源码的代码文件.它会在Android源码根目录下
+# 新建一个"0-代码修改"的目录,根据操作选项(-a或-b),在"0-代码修改"
+# 目录里面新建一个after或者before子目录,然后读取要拷贝的文件信息,
 # 把里面指定的文件按照对应的目录结构拷贝到after或者before目录下.
 set -e
 
@@ -11,28 +11,26 @@ set -e
 # foo     file_path1
 # project git_root_dir2/
 # foo     file_path1
-# 里面的内容分为多段,每段以project作为标识,project后面跟着git仓
-# 库的根目录,要求以'/'结尾.在遇到下一个project开头的行之前,当前
-# project往下的行都属于该段,上面写有foo的部分是占位符,内容不限,但一
-# 定要有;第二列是git仓库下的文件路径.一个例子如show_help()函数所示.
-# NOTE 这些信息可以通过repo status或者git log --name-status命令得到.
+# 里面的内容分为多段,每段以project作为标识,project后面跟着git仓库的
+# 根目录,要求以'/'结尾.在遇到下一个project开头的行之前,当前project
+# 往下的行都属于该段,上面写有foo的部分是占位符,内容不限,但一定要有.
+# 第二列是git仓库下的文件路径.参考例子如show_help()函数所示.
 show_help()
 {
 printf "USAGE
-        $(basename $0) a|b [filename]
+    cpcode.sh a|b [filename]
 OPTIONS
-        该脚本要在Android源码根目录下执行,可以接受2个参数,且至少提供一个参数:
-        a|b: 指定本地代码的目录,字母'a'表示代码被拷贝到本地的after目录,
-             字母'b'表示代码被拷贝本地的before目录.这两个字母只能提供一个.
-        filename: 文件名,该文件里面保存了要拷贝的文件信息,一个例子为:
-             project frameworks/opt/telephony/     branch develop
-             -m  src/java/com/android/internal/telephony/PhoneProxy.java
-             project hardware/ril/                 branch develop
-             -m   include/telephony/ril.h
-             !!注意!!: 该文件要放在Android源码的根目录下.如果没有提供
-             文件名参数,默认使用的文件名是: gitlog-files.txt.
-             这个文件必须是unix格式,不带\r字符,如果是从Windows拷贝过来的文件,
-             带了\r字符,可以用dos2unix命令转换成unix格式文件,再执行这个脚本.
+    该脚本要在Android源码根目录下执行,可以接收2个参数,且至少提供一个参数:
+    a|b: 指定本地代码的目录,字母'a'表示代码被拷贝到本地的after目录,
+         字母'b'表示代码被拷贝本地的before目录.这两个字母只能提供一个.
+    filename: 文件名,该文件里面保存了要拷贝的文件信息.参考例子如下:
+         project frameworks/opt/telephony/
+         -m  src/java/com/android/internal/telephony/PhoneProxy.java
+         project hardware/ril/
+         -m   include/telephony/ril.h
+         这些文件信息可以通过repo status或者git log --name-status命令得到.
+         !!注意!!: 该文件要放在Android源码的根目录下.如果没有提供
+         文件名参数,默认使用的文件名是: gitlog-files.txt.
 "
 }
 
@@ -49,8 +47,7 @@ FRAMEWORKS="frameworks"
 if [ ! -d "${FRAMEWORKS}" ]; then
     echo "出错: 当前目录 $(pwd) 下没有包含 ${FRAMEWORKS} 目录"
     echo "      请在Android源码根目录下执行该脚本"
-    show_help
-    exit 1
+    exit 2
 fi
 
 AFTER="after"
@@ -82,7 +79,7 @@ fi
 # 该变量保存脚本所要解析的文件名.这个文件存有所要拷贝的文件信息.
 if [ ! -f "${filename}" ]; then
     echo "出错: 在当前目录下不存在要解析的 ${filename} 文件!"
-    exit 1 
+    exit 2
 fi
 
 # 过滤repo -p -c git log --name-status命令所生成的git log信息,会将"project"
@@ -125,6 +122,13 @@ parse_gitlog_info()
         header="$(echo ${fileline} | awk '{print $1}')"
         if [ "${header}" == "${PROJECT_IDENTIFY}" ]; then
             project_dir="$(echo ${fileline} | awk '{print $2}')"
+            local lastchar=${project_dir: -1:1}
+            # project_dir 被作为目录路径使用,要求最后一个字符
+            # 必须是'/',以便组装成目录路径.如果没有以'/'结尾,
+            # 则在该变量值后面加上 '/' 字符.
+            if [ "$lastchar" != "/" ]; then
+                project_dir="${project_dir}/"
+            fi
         elif [ -n "${fileline}" ]; then
             # 当文件中有空行时,readline的内容会是null,后面组装
             # sub_file_path的值会有异常,所以上面用-n判断不为空才处理.
@@ -180,8 +184,13 @@ copy_gitlog_files()
 # dos格式文件末尾是\r\n,而unix格式的文件末尾是\n,且把\r视作有效字符,
 # 如果不做转换,那么传入一个dos格式的文件,最后得到的文件名路径会包含\r
 # 字符,它会被当做文件名的一部分,cp命令拷贝时会提示找不到这样的文件.
-# 为了避免多次执行这个语句,先注释掉.可以在shell中自行转换dos格式的文件
-## dos2unix "${filename}"
+# 当使用 file 命令查看 dos 格式文件时,打印信息会包含
+# "CRLF line terminators" 字符串.下面检查所给文件是否
+# 为 dos 格式. 如果是,则执行 dos2unix 命令转换为 unix 格式文件.
+if [[ "$(file filename)" =~ "CRLF line terminators" ]]; then
+    dos2unix "${filename}"
+fi
+
 parse_gitlog_info "${filename}"
 copy_gitlog_files "${target_gitlog_file}"
 
