@@ -147,6 +147,10 @@ parse_file_infos()
         echo >> "${parsefile}"
     fi
 
+    # /dev/null 是一个空文件,输出这个文件的内容为空.重定向到
+    # FULL_FILEPATH 文件,清空该文件的内容,避免原有内容的影响.
+    cat /dev/null > "${FULL_FILEPATH}"
+
     while read fileline; do
         header="$(echo ${fileline} | awk '{print $1}')"
         if [ "${header}" == "${IDENTIFY_PROJECT}" ]; then
