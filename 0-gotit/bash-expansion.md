@@ -4,7 +4,7 @@
 
 # 算术扩展
 在 bash 中，算术扩展（arithmetic expansion）可以获取算术表达式的运算结果。  
-可以进行加减乘除运算、比较大小、比较是否相等、进行与或非运算，等等。
+还可以进行加减乘除运算、比较大小、比较是否相等、进行与或非运算，等等。
 
 查看 man bash 的说明如下：
 > Arithmetic expansion allows the evaluation of an arithmetic expression and the substitution of the result. The format for arithmetic expansion is:  
@@ -14,7 +14,7 @@
 > The old format $[expression] is deprecated and will be removed in upcoming versions of bash.  
 > The expression is treated as if it were within double quotes, but a double quote inside the parentheses is not treated specially. All tokens in the expression undergo parameter and variable expansion, command substitution, and quote removal.  
 > The result is treated as the arithmetic expression to be evaluated. Arithmetic expansions may be nested.
-
+>
 > The evaluation is performed according to the rules listed below under ARITHMETIC EVALUATION. If expression is invalid, bash prints a message indicating failure and no substitution occurs.
 
 即，`$((expression))` 算术扩展会按照 *ARITHMETIC EVALUATION* 描述的规则来评估 *expression* 算术表达式，并获取到该表达式的值。
@@ -68,7 +68,7 @@ $ echo $number
 直接写为算术表达式自身，并不能进行算术运算。
 
 ## 使用算法表达式进行比较判断
-在 bash 的 算法表达式中，支持 `<= >= < > == !=` 这 6 个常见的运算符，可用于进行比较判断。
+在 bash 的 算法表达式中，支持 `<=、>=、<、>、==、!=` 这 6 个常见的运算符，可用于进行比较判断。
 
 假设有一个 `arth_check.sh` 脚本，内容如下：
 ```bash

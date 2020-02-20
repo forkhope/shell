@@ -91,25 +91,27 @@ $ ./testparams.sh This is a test
 
 查看 man bash 里面对 *getopts* 内置命令的英文说明如下：
 > **getopts optstring name [args]**  
-> *getopts* is used by shell procedures to parse positional parameters. *optstring* contains the option characters to be recognized; if a character is followed by a colon, the option is expected to have an argument, which should be separated from it by white space.  
+> *getopts* is used by shell procedures to parse positional parameters.  
+> *optstring* contains the option characters to be recognized; if a character is followed by a colon, the option is expected to have an argument, which should be separated from it by white space.  
 > The colon and question mark characters may not be used as option characters.  
+>
 > Each time it is invoked, getopts places the next option in the shell variable *name*, initializing *name* if it does not exist, and the index of the next argument to be processed into the variable *OPTIND*.  
 > *OPTIND* is initialized to 1 each time the shell or a shell script is invoked.  
 > When an option requires an argument, getopts places that argument into the variable *OPTARG*.  
 > The shell does not reset *OPTIND* automatically; it must be manually reset between multiple calls to getopts within the same shell invocation if a new set of parameters is to be used.
-
+>
 > When the end of options is encountered, getopts exits with a return value greater than zero.   
 > *OPTIND* is set to the index of the first non-option argument, and *name* is set to `?`.
-
+>
 > getopts normally parses the positional parameters, but if more arguments are given in *args*, getopts parses those instead.
-
+>
 > getopts can report errors in two ways. If the first character of *optstring* is a colon, *silent* error reporting is used.  
 > In normal operation, diagnostic messages are printed when invalid options or missing option arguments are encountered.  
 > If the variable OPTERR is set to 0, no error messages will be displayed, even if the first character of *optstring* is not a colon.
-
+>
 > If an invalid option is seen, getopts places `?` into *name* and, if not silent, prints an error message and unsets *OPTARG*.  
 > If getopts is silent, the option character found is placed in *OPTARG* and no diagnostic message is printed.
-
+>
 > If a required argument is not found, and getopts is not silent, a question mark (?) is placed in *name*, *OPTARG* is unset, and a diagnostic message is printed.  
 > If getopts is silent, then a colon (:) is placed in *name* and *OPTARG* is set to the option character found.
 
@@ -848,7 +850,7 @@ This is a check it
 而不是匹配到 "test" 字符串的 "st"。  
 最终结果取最长匹配的部分。
 
-# 汇总说明字符串变量值相关的参数扩展表达式
+# 实例介绍数个参数扩展表达式以处理字符串变量
 Linux 的 bash shell 提供了多种形式的参数扩展表达式，可以获取变量自身的值，或者对变量值进行特定处理得到一个新的值，等等。  
 本篇文章对字符串变量值相关的参数扩展表达式进行汇总说明。
 
