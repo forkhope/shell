@@ -8,9 +8,12 @@
 
 # tar 命令格式
 查看 man tar 对 `tar` 命令的格式说明如下：
-> **tar [-] A --catenate --concatenate | c --create | d --diff --compare | --delete | r --append | t --list | --test-label | u --update | x --extract --get [options] [pathname ...]**  
-> Tar stores and extracts files from a tape or disk archive.  
-> A function letter need not be prefixed with ``-'', and may be combined with other single-letter options. A long function name must be prefixed with --.  
+> **tar [-] A --catenate --concatenate | c --create | d --diff --compare | --delete | r --append | t --list | --test-label | u --update | x --extract --get [options] [pathname ...]**
+>
+> Tar stores and extracts files from a tape or disk archive.
+>
+> A function letter need not be prefixed with ``-'', and may be combined with other single-letter options. A long function name must be prefixed with --.
+>
 > Some options take a parameter; with the single-letter form these must be given as separate arguments.  With the long form, they may be given by appending =value to the option.
 
 即，`tar` 命令可以在磁带、或者磁盘上创建和提取归档文件。
@@ -29,7 +32,7 @@
 - **-t, --list**  
     list the contents of an archive.  
     即，不用解开归档文件，就能列出归档文件里面打包的文件信息
-- **-u, --update**
+- **-u, --update**  
     only append files newer than copy in archive  
     即，当本地文件新于归档文件里面的文件时，打包本地文件到归档文件里面。  
     这个选项不能更新被压缩的归档文件。

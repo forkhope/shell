@@ -117,6 +117,7 @@ repo_forall_reset_pull()
     #   分支.如果不存在,就不会继续操作,可以避免覆盖本地调试分支的修改.
     #   注意: 这里的 "@{upstream}" 是整个命令的一部分,不是脚本自身的变量
     # git reset --hard: Resets the index and working tree. 这会覆盖本地修改.
+    # git clean -fd: 删除本地新增的、未跟踪的文件和目录.
     # git pull --stat --no-tags: 参考下面git_pull_current_branch_only()的说明
     # 执行git pull --stat命令,会打印仓库的状态,下面用grep命令过滤出发生变动
     # 的分支和改动的文件.第一次grep到的project信息会包含没有变动的project名,
@@ -138,6 +139,7 @@ repo_forall_reset_pull()
     ${REPO} forall -p -c 'branch_name=$(git rev-parse --abbrev-ref HEAD) &&\
         git rev-parse --abbrev-ref ${branch_name}@{upstream} &&\
         git reset --hard &&\
+        git clean -fd &&\
         git pull --stat --no-tags $(git remote) ${branch_name}' |\
         grep -E 'project|\|' | ${GREP_COLOR} -B 1 '|'
 }

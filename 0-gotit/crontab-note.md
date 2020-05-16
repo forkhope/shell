@@ -5,24 +5,34 @@
 
 这个 `crontab` 命令用于设置在指定时间点要进行的具体操作，通过特定格式的信息来进行指定，这些信息会被写入一个 *crontab* 文件。
 
-这些定时任务由 cron 守护进程来执行，该进程一直运行在后台，会定时检查 *crontab* 文件来判断需要做什么，如果某个任务需要被执行，就会执行该任务指定的操作。一般来说，系统启动时，init 进程会启动 cron 进程。
+这些定时任务由 cron 守护进程来执行，该进程一直运行在后台，会定时检查 *crontab* 文件来判断需要做什么，如果某个任务需要被执行，就会执行该任务指定的操作。
 
-可以使用 man crontab 来查看 `crontab` 命令的帮助信息。  
-使用 man 5 crontab 来查看 *ctontab* 文件的格式，需要基于特定格式来设置定时任务。  
+一般来说，系统启动时，init 进程会启动 cron 进程。
+
+可以使用 man crontab 来查看 `crontab` 命令的帮助信息。
+
+使用 man 5 crontab 来查看 *ctontab* 文件的格式，需要基于特定格式来设置定时任务。
+
 使用 man 8 cron 命令查看 cron 守护进程的帮助信息。
 
 ## 编辑定时任务
-在 `crontab` 命令中，可以使用 `-e` 选项来指定编辑定时任务。查看 man crontab 对 `-e` 选项的说明如下：
+在 `crontab` 命令中，可以使用 `-e` 选项来指定编辑定时任务。
+
+查看 man crontab 对 `-e` 选项的说明如下：
 > The -e option is used to edit the current crontab using the editor specified by the VISUAL or EDITOR environment variables. After you exit from the editor, the modified crontab will be installed automatically. If neither of the environment variables is defined, then the default editor /usr/bin/editor is used.
 
-即，`crontab -e` 命令编辑当前用户的 *crontab* 文件，在该文件中按照特定格式添加定时任务，优先使用 *VISUAL*、或者 *EDITOR* 环境变量值指定的编辑器来进行编辑。如果这两个环境变量都没有定义，则默认使用 */usr/bin/editor* 文件指定的编辑器。
+即，`crontab -e` 命令编辑当前用户的 *crontab* 文件，在该文件中按照特定格式添加定时任务，优先使用 *VISUAL*、或者 *EDITOR* 环境变量值指定的编辑器来进行编辑。
+
+如果这两个环境变量都没有定义，则默认使用 */usr/bin/editor* 文件指定的编辑器。
 
 在 Debian 系统和 Ubuntu 系统上， */usr/bin/editor* 文件是一个链接文件，最终链接到 */bin/nano* 文件，也就是默认使用 nano 编辑器。
 
 在 Ubuntu 系统上测试发现，第一次执行 `crontab -e` 命令时，它会调用 `select-editor` 命令提供一个编辑器菜单列表，可以选择一个默认的编辑器。如果按 CTRL-D，什么都没有选择，默认会使用 nano 编辑器。
 
 ## crontab 文件格式
-执行 `crontab -e` 命令后，就会打开当前用户的 *crontab* 文件，在这个文件中，以 `#` 开头的语句是注释语句。默认的 *crontab* 文件包含一些注释，在注释中提供了一个例子、以及设置定时任务的字段格式说明。具体内容如下：
+执行 `crontab -e` 命令后，就会打开当前用户的 *crontab* 文件，在这个文件中，以 `#` 开头的语句是注释语句。
+
+默认的 *crontab* 文件包含一些注释，在注释中提供了一个例子、以及设置定时任务的字段格式说明。具体内容如下：
 ```
 # For example, you can run a backup of all your user accounts
 # at 5 a.m every week with:
@@ -30,7 +40,9 @@
 #
 # m h  dom mon dow   command
 ```
-这里举例说明了一个 `0 5 * * 1 tar -zcf /var/backups/home.tgz /home/` 定时任务，在每周一的五点钟会执行 `tar -zcf /var/backups/home.tgz /home/` 命令。下面具体说明如何理解这个定时任务的各个字段。
+这里举例说明了一个 `0 5 * * 1 tar -zcf /var/backups/home.tgz /home/` 定时任务，在每周一的五点钟会执行 `tar -zcf /var/backups/home.tgz /home/` 命令。
+
+下面具体说明如何理解这个定时任务的各个字段。
 
 在 *crontab* 文件中，通过 `m h  dom mon dow   command` 这六个字段来设置定时任务，每一行对应一个定时任务。这六个字段的含义说明如下：
 - m：对应分钟（minute）  
@@ -61,19 +73,25 @@
 - /  
 表示一个时间间隔，而不是指定具体的时间。例如，把小时指定为 `*/2`，表示每间隔两小时执行一次该任务。
 
-在 *command* 字段中，可以使用换行符、或者 % 字符来分隔命令内容。在第一个 % 之前的内容会传递给 shell 来执行，这个 % 自身会被替换成换行符，在 % 之后、直到行末的内容都作为标准输入传递。如果需要提供 % 字符自身，需要用 `\%` 进行转义。
+在 *command* 字段中，可以使用换行符、或者 % 字符来分隔命令内容。
+
+在第一个 % 之前的内容会传递给 shell 来执行，这个 % 自身会被替换成换行符，在 % 之后、直到行末的内容都作为标准输入传递。
+
+如果需要提供 % 字符自身，需要用 `\%` 进行转义。
 
 ## cron 守护进程如何执行定时任务
 在 man 5 crontab 的说明中，有如下内容：
 > Several environment variables are set up automatically by the cron(8) daemon. SHELL is set to /bin/sh, and LOGNAME and HOME are set from the /etc/passwd line of the crontab's owner. PATH is set to "/usr/bin:/bin". HOME, SHELL, and PATH may be overridden by settings in the crontab;
-
+>
 > An alternative for setting up the commands path is using the fact that many shells will treat the tilde(~) as substitution of $HOME, so if you use bash for your tasks you can use this:
 ```
         SHELL=/bin/bash
         PATH=~/bin:/usr/bin/:/bin
 ```
 
-即，cron 守护进程默认使用 */bin/sh* 这个 shell 来执行 *crontab* 文件指定的命令。如果想要用 bash 来执行，可以 *crontab* 文件中添加 `SHELL=/bin/bash` 这一行。
+即，cron 守护进程默认使用 */bin/sh* 这个 shell 来执行 *crontab* 文件指定的命令。
+
+如果想要用 bash 来执行，可以 *crontab* 文件中添加 `SHELL=/bin/bash` 这一行。
 
 默认的寻址路径是 "/usr/bin:/bin"，如果需要执行的命令、或者脚本文件没有放在这两个路径下，就需要通过文件路径来指定，建议使用绝对路径。
 
@@ -93,7 +111,9 @@ $ ps -e | grep cron
 ```
 */5 *  *   *   *  date >> ~/testcron.txt
 ```
-基于前面的说明，第一个 `*/5` 表示每间隔 5 分钟就执行一次，后面四个 `*` 表示在每个月的每一天的每一个小时都执行该任务。具体执行的命令是 `date >> ~/testcron.txt`，把执行任务时的时间追加写入到 *testcron.txt* 文件。
+基于前面的说明，第一个 `*/5` 表示每间隔 5 分钟就执行一次，后面四个 `*` 表示在每个月的每一天的每一个小时都执行该任务。
+
+具体执行的命令是 `date >> ~/testcron.txt`，把执行任务时的时间追加写入到 *testcron.txt* 文件。
 
 即，这个定时任务每天都会运行，每间隔 5 分钟就运行一次。可以通过查看  *testcron.txt* 文件来确认是否执行过该任务。
 
@@ -116,7 +136,9 @@ $ cat testcron.txt
 可以看到，确实是每隔 5 分钟就写入一次日期到 *testcron.txt* 文件。
 
 ## 查看定时任务内容
-在 `crontab` 命令中，可以使用 `-l` 选项来查看 *crontab* 文件内容，从而看到里面包含的各个定时任务。查看 man crontab 对 `-l` 选项的说明如下：
+在 `crontab` 命令中，可以使用 `-l` 选项来查看 *crontab* 文件内容，从而看到里面包含的各个定时任务。
+
+查看 man crontab 对 `-l` 选项的说明如下：
 > The -l option causes the current crontab to be displayed on standard output.
 
 这个文件会打印整个 *crontab* 文件内容，包含注释语句。部分内容列举如下：

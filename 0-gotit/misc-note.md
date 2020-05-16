@@ -41,8 +41,9 @@ test -n "$(tail filename -c 1)"
 `tail` 命令可以获取文件末尾的内容。它的 `-c` 选项指定要获取文件末尾的多少个字节。
 
 查看 man tail 对 `-c` 选项的说明如下：
-> **-c, --bytes=K**  
-output the last K bytes; alternatively, use -c +K to output bytes starting with the Kth of each file.
+> **-c, --bytes=K**
+>
+> output the last K bytes; alternatively, use -c +K to output bytes starting with the Kth of each file.
 
 即，`tail -c 1` 命令指定获取所给文件的最后一个字符。
 
