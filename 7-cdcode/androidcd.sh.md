@@ -1,24 +1,32 @@
 # 介绍一个在 Android 源码目录之间直接来回快速 cd 的 shell 脚本
 
-之前文章介绍了一个 `quickcd.sh` 脚本，可以指定任意的顶层目录，在顶层目录底下快速 `cd` 到特定的目录。  
+之前文章介绍了一个 `quickcd.sh` 脚本，可以指定任意的顶层目录，在顶层目录底下快速 `cd` 到特定的目录。
+
 这个 `quickcd.sh` 脚本是通用的，适用于各种目录结构。
 
-如果从事 Android 开发工作，经常需要在 Android 源码目录之间切换。  
-同时，可以对脚本进行一些修改，支持一些跟 Android 相关的功能。  
-例如，指定一个选项就可以自动 source、lunch、全编译 Android 源码。  
+如果从事 Android 开发工作，经常需要在 Android 源码目录之间切换。
+
+同时，可以对脚本进行一些修改，支持一些跟 Android 相关的功能。
+
+例如，指定一个选项就可以自动 source、lunch、全编译 Android 源码。
+
 添加一些标志位指定进入某个目录时，就自动编译这个目录下的代码。等等。
 
-本篇文章介绍一个 `androidcd.sh` 脚本，在 `quickcd.sh` 脚本的基础上添加跟 Android 相关的代码和选项。  
+本篇文章介绍一个 `androidcd.sh` 脚本，在 `quickcd.sh` 脚本的基础上添加跟 Android 相关的代码和选项。
 
-实际上，`androidcd.sh` 脚本支持 `quickcd.sh` 的所有功能，也可以用于任意顶层目录。  
-只是脚本代码里面多加了一些 Android 相关的代码和选项。  
+实际上，`androidcd.sh` 脚本支持 `quickcd.sh` 的所有功能，也可以用于任意顶层目录。
+
+只是脚本代码里面多加了一些 Android 相关的代码和选项。
+
 如果不需要用到这些选项，使用之前文章介绍的 `quickcd.sh` 脚本即可，这个代码比较独立。
 
 下面提供具体的脚本代码、参考的配置文件内容、以及一个测试例子。
 
 # 脚本代码
-列出 `quickcd.sh` 脚本的具体代码如下所示。  
-在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。  
+列出 `androidcd.sh` 脚本的具体代码如下所示。
+
+在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。
+
 这篇文章的后面也会提供一个简单的测试例子，可供参考。
 ```bash
 #!/bin/bash
@@ -423,8 +431,10 @@ return
 ```
 
 # 参考的配置文件内容
-这个脚本默认会读取 HOME 目录下的 `.liconfig/dirinfo.txt` 文件。  
-这个文件里面配置了各个路径简写和对应要调整的目录路径。  
+这个脚本默认会读取 HOME 目录下的 `.liconfig/dirinfo.txt` 文件。
+
+这个文件里面配置了各个路径简写和对应要调整的目录路径。
+
 参考的配置文件内容如下：
 ```
 b|frameworks/base
@@ -438,9 +448,12 @@ ps|packages/apps/Settings/
 基于这个配置信息，无论当前位于哪个目录下，使用 *fs* 这个简写作为参数，`androidcd.sh` 脚本都会执行 `cd` 命令直接进入 `frameworks/base/services` 目录下。
 
 # 测试例子
-把当前的 `androidcd.sh` 脚本、所调用的 `parsecfg.sh` 脚本（具体代码可以查看之前文章）放到可寻址的 PATH 目录下。  
-在 bash 中设置 `alias c='source androidcd.sh'` 别名。  
-把 `dirinfo.txt` 配置文件放到 HOME 目录的 *.liconfig* 目录下（如果没有该目录，则手动创建）。  
+把当前的 `androidcd.sh` 脚本、所调用的 `parsecfg.sh` 脚本（具体代码可以查看之前文章）放到可寻址的 PATH 目录下。
+
+在 bash 中设置 `alias c='source androidcd.sh'` 别名。
+
+把 `dirinfo.txt` 配置文件放到 HOME 目录的 *.liconfig* 目录下（如果没有该目录，则手动创建）。
+
 之后，就可以使用 *c* 命令来执行 `androidcd.sh` 脚本。
 
 一个简单的测试例子如下所示：
@@ -458,30 +471,44 @@ Enter /home/android/packages/apps/Settings/, execute mm.
 
 执行 `c -s android/` 设置要跳转的 Android 源码根目录路径。
 
-执行 `c fm` 命令跳转到 fm 路径简写对应的目录。  
-执行 `c fs` 命令跳转到 fs 路径简写对应的目录。  
-执行 `c sui` 命令跳转到 sui 路径简写对应的目录。  
-执行 `c ps` 命令跳转到 ps 路径简写对应的目录。  
+执行 `c fm` 命令跳转到 fm 路径简写对应的目录。
+
+执行 `c fs` 命令跳转到 fs 路径简写对应的目录。
+
+执行 `c sui` 命令跳转到 sui 路径简写对应的目录。
+
+执行 `c ps` 命令跳转到 ps 路径简写对应的目录。
+
 可以看到，使用 `androidcd.sh` 脚本可以直接在跨度非常大的目录之间跳转，非常方便。
 
 只要执行过 `c -s` 命令指定了 Android 源码根目录路径，无论当前位于哪个目录下，执行 `c -m dl` 命令会自动跳转到Android 源码根目录进行全编译。
 
-执行 `c +ps` 命令，在 ps 路径简写前面加上字符 ‘+’。  
-那么会切换到 ps 对应的目录下，然后自动执行 Android 的 mm 命令编译该目录下的代码。  
-前面进行全编译时，已经进行过 Android 的 source、lunch 操作。  
+执行 `c +ps` 命令，在 ps 路径简写前面加上字符 ‘+’。
+
+那么会切换到 ps 对应的目录下，然后自动执行 Android 的 mm 命令编译该目录下的代码。
+
+前面进行全编译时，已经进行过 Android 的 source、lunch 操作。
+
 这里可以直接使用 mm 命令进行编译。
 
-在 Android 下进行编译，需要先进行 source、lunch 的操作。  
-目前 Android 没有提供可以判断是否 lunch 过的命令。  
-为了避免多次 source、lunch，使用字符 ‘+’ 来指定编译时，不会自动 source、lunch。  
-即，要先 source、lunch，再使用字符 ‘+’ 来指定编译。  
+在 Android 下进行编译，需要先进行 source、lunch 的操作。
+
+目前 Android 没有提供可以判断是否 lunch 过的命令。
+
+为了避免多次 source、lunch，使用字符 ‘+’ 来指定编译时，不会自动 source、lunch。
+
+即，要先 source、lunch，再使用字符 ‘+’ 来指定编译。
+
 可以使用 `c -n lunch_combo` 命令来进行 source、lunch 操作。
 
-上面 `c -m` 所给的 dl 参数表示编译默认的 project。  
-这个 project 由 `androidcd.sh` 脚本的 DEFAULT_LAUNCH_COMBO 变量指定。  
-默认配置为最常使用的 project 名称。  
+上面 `c -m` 所给的 dl 参数表示编译默认的 project。
+
+这个 project 由 `androidcd.sh` 脚本的 DEFAULT_LAUNCH_COMBO 变量指定。
+
+默认配置为最常使用的 project 名称。
+
 可以根据实际需要修改为对应的 project 名称。
 
-如果想要编译其他的 project，在 `-m` 选项后面提供对应的 lunch 分支即可。  
+如果想要编译其他的 project，在 `-m` 选项后面提供对应的 lunch 分支即可。
 
 要查看 `-m` 选项、以及更多选项的用法，可以使用 `c -h` 命令打印具体的帮助信息。

@@ -1,9 +1,11 @@
 # 介绍一个可以在不同目录之间直接来回快速 cd 的 shell 脚本
 
-本篇文章介绍一个可以在不同目录之间直接来回快速 cd 的 shell 脚本。  
+本篇文章介绍一个可以在不同目录之间直接来回快速 cd 的 shell 脚本。
+
 假设这个 shell 脚本的名称为 `quickcd.sh`。
 
-在 Linux 下进行项目开发，特别是进行 Android 系统开发工作，经常需要使用 `cd` 命令切换 shell 的工作目录。  
+在 Linux 下进行项目开发，特别是进行 Android 系统开发工作，经常需要使用 `cd` 命令切换 shell 的工作目录。
+
 想象这样一个使用场景：
 - 当前 shell 位于源码根目录的 *frameworks/base/packages/SystemUI/src/com/android/systemui/* 目录下。
 - 接下来要进入源码根目录的 *packages/apps/Settings/src/com/android/settings/* 目录，使用 git 查看某个文件的修改记录。
@@ -13,24 +15,33 @@
 
 可以看到，整个过程需要输入很多字符，非常麻烦。
 
-实际上，在记录当前源码根目录的绝对路径之后，可以使用一些简单字符来对应一些常用的目录路径。  
-例如，用 *sui* 对应 *frameworks/base/packages/SystemUI/src/com/android/systemui/* 目录。  
-用 *ps* 对应 *packages/apps/Settings/src/com/android/settings/* 目录。  
+实际上，在记录当前源码根目录的绝对路径之后，可以使用一些简单字符来对应一些常用的目录路径。
+
+例如，用 *sui* 对应 *frameworks/base/packages/SystemUI/src/com/android/systemui/* 目录。
+
+用 *ps* 对应 *packages/apps/Settings/src/com/android/settings/* 目录。
+
 可以把这些简写字符传递给这里介绍的 `quickcd.sh` 脚本，就可以快速 cd 到对应的目录。
 
-例如，执行 `source quickcd.sh ps` 命令，`quickcd.sh` 获取到 *ps* 对应 *packages/apps/Settings/src/com/android/settings/* 目录。  
-然后自动在这个目录前面加上当前源码根目录的绝对路径，就可以使用 `cd` 命令直接进入到对应的目录。  
+例如，执行 `source quickcd.sh ps` 命令，`quickcd.sh` 获取到 *ps* 对应 *packages/apps/Settings/src/com/android/settings/* 目录。
+
+然后自动在这个目录前面加上当前源码根目录的绝对路径，就可以使用 `cd` 命令直接进入到对应的目录。
+
 这样只需要输入很少的字符，并省去了执行 `cd ../../../` 这个步骤。
 
 后面会介绍如何设置命令别名来避免输入 `source quickcd.sh` 这些字符，进一步减少输入，更加方便。
 
 # 配置目录路径简写
-如之前说明，可以用 *sui* 表示 *frameworks/base/packages/SystemUI/src/com/android/systemui/* 目录。  
-这个 *sui* 称之为 “路径简写”。  
+如之前说明，可以用 *sui* 表示 *frameworks/base/packages/SystemUI/src/com/android/systemui/* 目录。
+
+这个 *sui* 称之为 “路径简写”。
+
 路径简写使用一些简单字符来表示特定的目录路径。
 
-为了方便动态添加、删除、查询路径简写，可以把这些路径简写保存在一个配置文件里面。  
-在执行 `quickcd.sh` 脚本时，会读取配置文件内容，获取到各个配置项的值。  
+为了方便动态添加、删除、查询路径简写，可以把这些路径简写保存在一个配置文件里面。
+
+在执行 `quickcd.sh` 脚本时，会读取配置文件内容，获取到各个配置项的值。
+
 配置项的基本格式是：路径简写|目录路径
 
 一个参考的配置文件内容如下所示：
@@ -40,22 +51,29 @@ sui|frameworks/base/packages/SystemUI/src/com/android/systemui
 ps|packages/apps/Settings/src/com/android/settings
 ```
 
-这些配置的目录路径都是 Android 源码根目录下的相对路径。  
-在实际执行 `cd` 命令的时候，会自动上它们所在的 Android 源码根目录的绝对路径。  
+这些配置的目录路径都是 Android 源码根目录下的相对路径。
+
+在实际执行 `cd` 命令的时候，会自动上它们所在的 Android 源码根目录的绝对路径。
+
 这个绝对路径是在运行时通过命令选项所指定。只需要指定一次，会一直生效。
 
-解析配置文件时，需要用到之前文章介绍的 `parsecfg.sh` 脚本。  
+解析配置文件时，需要用到之前文章介绍的 `parsecfg.sh` 脚本。
+
 要获取 `parsecfg.sh` 脚本的代码，可以查看之前的文章。
 
-当然，这个脚本并不只限于用在 Android 源码目录上。  
-`quickcd.sh` 脚本支持指定任意的顶层目录路径。  
+当然，这个脚本并不只限于用在 Android 源码目录上。
+
+`quickcd.sh` 脚本支持指定任意的顶层目录路径。
+
 例如，可以指定 Linux 的 HOME 目录，配置 HOME 底下各个目录的路径，就可以进行切换。
 
 后面会提供具体测试的例子，可供参考。
 
 # 脚本代码
-列出 `quickcd.sh` 脚本的具体代码如下所示。  
-在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。  
+列出 `quickcd.sh` 脚本的具体代码如下所示。
+
+在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。
+
 这篇文章的后面也会对一些关键点进行说明，有助理解。
 ```bash
 #!/bin/bash
@@ -304,30 +322,39 @@ return
 ## 建议设置命令别名来执行当前脚本
 如脚本代码开头注释所示，需要使用 `source` 命令来执行 `quickcd.sh` 脚本，以便执行该脚本之后，可以保持在 `cd` 后的目录下。
 
-即，执行的时候，需要写为 `source quickcd.sh`。  
+即，执行的时候，需要写为 `source quickcd.sh`。
+
 这样需要输入比较多的字符，而且也容易忘记提供 `source` 命令。
 
-为了方便输入，在脚本注释中，建议设置命令别名来执行当前脚本。  
+为了方便输入，在脚本注释中，建议设置命令别名来执行当前脚本。
+
 例如，在 `~/.bashrc` 文件中添加下面语句来设置命令别名:
 ```bash
 alias c='source quickcd.sh'
 ```
-添加这个语句后，在当前终端中，需要执行 `source ~/.bashrc` 命令，这个别名才会生效。  
-也可以重新打开终端，在新打开的终端中，这个别名默认就会生效。  
-在别名生效之后，就可以使用 *c* 命令来执行 `quickcd.sh` 脚本。  
+添加这个语句后，在当前终端中，需要执行 `source ~/.bashrc` 命令，这个别名才会生效。
+
+也可以重新打开终端，在新打开的终端中，这个别名默认就会生效。
+
+在别名生效之后，就可以使用 *c* 命令来执行 `quickcd.sh` 脚本。
+
 例如，`c ps` 命令等价于 `source quickcd.sh ps` 命令。
 
-这里假设 `quickcd.sh` 脚本放在 PATH 全局变量指定的寻址目录里面，通过文件名就可以执行，不需要指定文件的路径。  
+这里假设 `quickcd.sh` 脚本放在 PATH 全局变量指定的寻址目录里面，通过文件名就可以执行，不需要指定文件的路径。
+
 如果该脚本没有放在默认的寻址目录里面，需要提供文件的绝对路径。
 
-这个脚本所调用的 `parsecfg.sh` 脚本也需要放在 PATH 全局变量指定的寻址目录里面。  
+这个脚本所调用的 `parsecfg.sh` 脚本也需要放在 PATH 全局变量指定的寻址目录里面。
+
 否则需要修改 `quickcd.sh` 脚本代码，在 `source` 的时候提供 `parsecfg.sh` 脚本文件的绝对路径。
 
 下面举例执行 `quickcd.sh` 脚本时，统一使用 *c* 这个命令别名。
 
 # 使用默认配置文件的测试例子
-`quickcd.sh` 脚本默认解析的配置文件是 HOME 目录下的 `.liconfig/dirinfo.txt` 文件。  
-可以配置为最常使用的路径简写。  
+`quickcd.sh` 脚本默认解析的配置文件是 HOME 目录下的 `.liconfig/dirinfo.txt` 文件。
+
+可以配置为最常使用的路径简写。
+
 假设这个文件的内容如下：
 ```
 b|frameworks/base
@@ -351,19 +378,24 @@ key='ps'        value='packages/apps/Settings/src/com/android/settings'
 [android/packages/apps/Settings/src/com/android/settings]$
 ```
 
-执行 `c -s android` 命令设置顶层目录为当前目录下的 *android* 目录。  
+执行 `c -s android` 命令设置顶层目录为当前目录下的 *android* 目录。
+
 `-s` 选项用于设置顶层目录路径，具体使用说明可以查看脚本打印的帮助信息。
 
 用 `c -p` 命令查看所设置的顶层目录绝对路径和解析的配置文件路径。
 
 用 `c -v` 命令显示键值对形式的配置项信息，能够查看配置的各个路径简写和对应的目录路径。
 
-执行 `c b` 命令跳转到 b 路径简写对应的目录，具体的目录是 *frameworks/base*。  
-`quickcd.sh` 脚本会用顶层目录的绝对路径 */home/android* 加上 *frameworks/base*，得到 */home/android/frameworks/base* 路径，然后用 `cd` 命令跳转到这个路径。  
+执行 `c b` 命令跳转到 b 路径简写对应的目录，具体的目录是 *frameworks/base*。
+
+`quickcd.sh` 脚本会用顶层目录的绝对路径 */home/android* 加上 *frameworks/base*，得到 */home/android/frameworks/base* 路径，然后用 `cd` 命令跳转到这个路径。
+
 在上面方括号中间显示的目录路径就是当前 shell 的工作目录，不包含 HOME 目录前面的路径。
 
-执行 `c sui` 命令跳转到 sui 路径简写对应的目录。  
-执行 `c ps` 命令跳转到 ps 路径简写对应的目录。  
+执行 `c sui` 命令跳转到 sui 路径简写对应的目录。
+
+执行 `c ps` 命令跳转到 ps 路径简写对应的目录。
+
 可以看到，使用 `quickcd.sh` 脚本可以直接在跨度非常大的目录之间跳转，非常方便。
 
 # 使用 -f 选项指定配置文件的测试例子
@@ -371,7 +403,8 @@ key='ps'        value='packages/apps/Settings/src/com/android/settings'
 
 `quickcd.sh` 脚本使用 -f 选项来指定配置文件的路径。
 
-假设在当前目录下有一个 *sample/update/* 目录和一个 *sample/updatesh/* 目录。  
+假设在当前目录下有一个 *sample/update/* 目录和一个 *sample/updatesh/* 目录。
+
 且在 *sample/updatesh/* 目录下有一个 *userdirinfo.txt* 文件，该文件内容如下：
 ```
 u|sample/update
@@ -396,7 +429,8 @@ $ c sh
 
 用 `c -v` 命令查看配置的路径简写和对应的目录。
 
-执行 `c u` 命令跳转到 u 路径简写对应的 *sample/update/* 目录。  
+执行 `c u` 命令跳转到 u 路径简写对应的 *sample/update/* 目录。
+
 执行 `c sh` 命令跳转到 sh 路径简写对应的 *sample/updatesh/* 目录。
 
 可以看到，`quickcd.sh` 脚本是一个通用的脚本，适用于各种目录结构，并不只限于 Android 源码目录。

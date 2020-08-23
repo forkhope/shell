@@ -1,36 +1,47 @@
 # 介绍一个解析、以及增删改查键值对格式配置文件的 shell 脚本
 
 # 介绍配置文件的格式和使用场景
-本篇文章介绍一个解析、以及增删改查键值对格式配置文件的 bash shell 脚本。  
+本篇文章介绍一个解析、以及增删改查键值对格式配置文件的 bash shell 脚本。
+
 该 shell 脚本处理的基本配置格式信息是：`key|value`。
 
-在脚本中，把 *key* 称为 “键名”。把 *value* 称为 “键值”。  
-把整个 *key|value* 称为 “键值对”。  
-把中间的 *|* 称为 “分隔符”。  
+在脚本中，把 *key* 称为 “键名”。把 *value* 称为 “键值”。
+
+把整个 *key|value* 称为 “键值对”。
+
+把中间的 *|* 称为 “分隔符”。
+
 默认的分隔符是 *|*。脚本里面提供了设置函数可以修改分隔符的值，以便自定义。
 
 基于这个配置格式，可以配置下面的一些信息。
 
 ## 配置目录路径简写
-配置一个目录路径简写，通过一个、或几个字符，就可以快速 `cd` 到很深的目录底下。  
+配置一个目录路径简写，通过一个、或几个字符，就可以快速 `cd` 到很深的目录底下。
+
 例如，在配置文件中有下面的信息：
 ```
 am|frameworks/base/services/core/java/com/android/server/am/  
 w|frameworks/base/wifi/java/android/net/wifi/
 ```
-假设有一个 `quickcd.sh` 脚本可以解析这个配置信息。  
-在执行 `quickcd.sh w` 命令时，该脚本会基于 *w* 这个键名，获取到 *frameworks/base/wifi/java/android/net/wifi/* 这个键值。  
-然后脚本里面执行 `cd frameworks/base/wifi/java/android/net/wifi/` 命令，进入到对应的目录下。  
+假设有一个 `quickcd.sh` 脚本可以解析这个配置信息。
+
+在执行 `quickcd.sh w` 命令时，该脚本会基于 *w* 这个键名，获取到 *frameworks/base/wifi/java/android/net/wifi/* 这个键值。
+
+然后脚本里面执行 `cd frameworks/base/wifi/java/android/net/wifi/` 命令，进入到对应的目录下。
+
 这样就不需要输入多个字符，非常方便。
 
 后面的文章会介绍在不同目录之间快速来回 `cd` 的 `quickcd.sh` 脚本。
 
-同时，所解析的配置信息保存在配置文件里面。  
-如果要新增、删除配置项，修改配置文件自身即可，不需要改动脚本代码。  
+同时，所解析的配置信息保存在配置文件里面。
+
+如果要新增、删除配置项，修改配置文件自身即可，不需要改动脚本代码。
+
 这样可以实现程序数据和程序代码的分离，方便复用。
 
 ## 配置命令简写
-配置一个命令简写，通过一个、或几个字符，就可以执行相应的命令。  
+配置一个命令简写，通过一个、或几个字符，就可以执行相应的命令。
+
 例如，在配置文件中有如下的信息：
 ```
 l|adb logcat -b all -v threadtime
@@ -38,8 +49,10 @@ png|adb shell "screencap /sdcard/screen.png"
 ```
 这里配置了 Android 系统的 adb 命令。
 
-类似的，假设有一个 `quickadb.sh` 脚本可以解析这个配置信息。  
-执行 `quickadb.sh l` 命令，该脚本实际会执行 `adb logcat -b all -v threadtime` 命令。  
+类似的，假设有一个 `quickadb.sh` 脚本可以解析这个配置信息。
+
+执行 `quickadb.sh l` 命令，该脚本实际会执行 `adb logcat -b all -v threadtime` 命令。
+
 这样可以减少输入，快速执行内容比较长的命令。
 
 使用配置文件保存命令简写，可以动态添加、删除命令，跟脚本代码独立开来。
@@ -47,48 +60,80 @@ png|adb shell "screencap /sdcard/screen.png"
 后面的文章会介绍一个通过命令简写执行对应命令的 `tinyshell.sh` 脚本。
 
 ## 使用场景总结
-总的来说，这里介绍的配置文件是基于键值对的形式。  
-常见的使用场景是，提供比较简单的键名来获取比较复杂的键值，然后使用键值来进行一些操作。  
+总的来说，这里介绍的配置文件是基于键值对的形式。
+
+常见的使用场景是，提供比较简单的键名来获取比较复杂的键值，然后使用键值来进行一些操作。
+
 但是在实际输入的时候，只需要输入键名即可，可以简化输入，方便使用。
 
-当然，实际使用并不局限于这些场景。  
+当然，实际使用并不局限于这些场景。
+
 如果有其他基于键值对的需求，可以在对应的场景上使用。
 
 # 脚本使用方法
 这个解析配置文件的 shell 脚本是一个独立的脚本，可以在其他脚本里面通过 `source` 命令进行调用。
 
 假设脚本文件名为 `parsecfg.sh`，调用该脚本的顺序步骤说明如下：
-1. `source parsecfg.sh`  
-在调用者的脚本中引入 `parsecfg.sh` 脚本的代码，以便后续调用 `parsecfg.sh` 脚本里面的函数。  
-这里需要通过 `source` 命令来调用，才能共享 `parsecfg.sh` 脚本里面的函数、全局变量值。
-1. （可选的）`set_info_ifs separator`  
-*set_info_ifs* 是 `parsecfg.sh` 脚本里面的函数，用于设置分隔符。  
-所给的第一个参数指定新的分隔符。  
-默认分隔符是 *|*。如果需要解析的配置文件用的是其他分隔符，就需要先设置分隔符，再解析配置文件。  
-如果使用默认的分隔符，可以跳过这个步骤。
-1. `open_config_file filename`  
-*open_config_file* 是 `parsecfg.sh` 脚本里面的函数，用于解析配置文件。  
-所给的第一个参数指定配置文件名。
-1. （可选的）`handle_config_option -l|-v|-i|-e|-a|-d`  
-*handle_config_option* 是 `parsecfg.sh` 脚本里面的函数，用于处理选项参数。  
-‘-l’ 选项打印配置文件本身的内容。  
-‘-v’ 选项以键值对的形式打印所有配置项的值。  
-‘-i’ 选项后面要跟着一个参数，查询该参数值在配置文件中的具体内容。  
-‘-e’ 选项使用 vim 打开配置文件，以便手动编辑。  
-‘-a’ 选项后面跟着一个参数，把指定的键值对添加到配置文件末尾。  
-‘-d’ 选项后面跟着一个参数，从配置文件中删除该参数所在的行。  
-如果没有需要处理的选项，可以跳过这个步骤。
-1. 解析配置文件后，就可以调用 `parsecfg.sh` 脚本提供的功能函数来进行一些操作。  
-*get_key_of_entry* 函数从 “key|value” 形式的键值对中获取到 *key* 这个键名。  
-*get_value_of_entry* 函数从 “key|value” 形式的键值对中获取到 *value”* 这个键值。  
-*get_value_by_key* 函数在配置文件中基于所给键名获取到对应的键值。  
-*search_value_from_file* 函数在配置文件中查找所给的内容，打印出匹配的行。  
-*delete_key_value* 函数从配置文件中删除所给键名对应的行。  
-*append_key_value* 函数把所给的键值对添加到配置文件的末尾。
+
+- `source parsecfg.sh`
+
+    在调用者的脚本中引入 `parsecfg.sh` 脚本的代码，以便后续调用 `parsecfg.sh` 脚本里面的函数。
+
+    这里需要通过 `source` 命令来调用，才能共享 `parsecfg.sh` 脚本里面的函数、全局变量值。
+
+- （可选的）`set_info_ifs separator`
+
+    *set_info_ifs* 是 `parsecfg.sh` 脚本里面的函数，用于设置分隔符。
+
+    所给的第一个参数指定新的分隔符。
+
+    默认分隔符是 *|*。如果需要解析的配置文件用的是其他分隔符，就需要先设置分隔符，再解析配置文件。
+
+    如果使用默认的分隔符，可以跳过这个步骤。
+
+- `open_config_file filename`
+
+    *open_config_file* 是 `parsecfg.sh` 脚本里面的函数，用于解析配置文件。
+
+    所给的第一个参数指定配置文件名。
+
+- （可选的）`handle_config_option -l|-v|-i|-e|-a|-d`
+
+    *handle_config_option* 是 `parsecfg.sh` 脚本里面的函数，用于处理选项参数。
+
+    ‘-l’ 选项打印配置文件本身的内容。
+
+    ‘-v’ 选项以键值对的形式打印所有配置项的值。
+
+    ‘-i’ 选项后面要跟着一个参数，查询该参数值在配置文件中的具体内容。
+
+    ‘-e’ 选项使用 vim 打开配置文件，以便手动编辑。
+
+    ‘-a’ 选项后面跟着一个参数，把指定的键值对添加到配置文件末尾。
+
+    ‘-d’ 选项后面跟着一个参数，从配置文件中删除该参数所在的行。
+
+    如果没有需要处理的选项，可以跳过这个步骤。
+
+- 解析配置文件后，就可以调用 `parsecfg.sh` 脚本提供的功能函数来进行一些操作。
+
+    *get_key_of_entry* 函数从 “key|value” 形式的键值对中获取到 *key* 这个键名。
+
+    *get_value_of_entry* 函数从 “key|value” 形式的键值对中获取到 *value”* 这个键值。
+
+    *get_value_by_key* 函数在配置文件中基于所给键名获取到对应的键值。
+
+    *search_value_from_file* 函数在配置文件中查找所给的内容，打印出匹配的行。
+
+    *delete_key_value* 函数从配置文件中删除所给键名对应的行。
+
+    *append_key_value* 函数把所给的键值对添加到配置文件的末尾。
 
 # `parsecfg.sh` 脚本代码
-列出 `parsecfg.sh` 脚本的具体代码如下所示。  
-在这个代码中，几乎每一行代码都提供了详细的注释，方便阅读。  
+列出 `parsecfg.sh` 脚本的具体代码如下所示。
+
+在这个代码中，几乎每一行代码都提供了详细的注释，方便阅读。
+
 这篇文章的后面也会提供一个参考的调用例子，有助理解。
 ```bash
 #!/bin/bash
@@ -381,15 +426,18 @@ echo "The key of 'a|adb logcat -b' is: $key"
 ```
 这个脚本所调用的函数都来自于 `parsecfg.sh` 脚本。
 
-这个 `testparsecfg.sh` 脚本指定解析一个 *cfgfile.txt* 配置文件。  
+这个 `testparsecfg.sh` 脚本指定解析一个 *cfgfile.txt* 配置文件。
+
 该配置文件的内容如下：
 ```
 am|frameworks/base/services/core/java/com/android/server/am/
 w|frameworks/base/wifi/java/android/net/wifi/
 ```
 
-把 `parsecfg.sh` 脚本、`testparsecfg.sh` 脚本、和 *cfgfile.txt* 配置文件都放到同一个目录下。  
-然后给这两个脚本文件都添加可执行权限。  
+把 `parsecfg.sh` 脚本、`testparsecfg.sh` 脚本、和 *cfgfile.txt* 配置文件都放到同一个目录下。
+
+然后给这两个脚本文件都添加可执行权限。
+
 执行 `testparsecfg.sh` 脚本，具体结果如下：
 ```
 $ ./testparsecfg.sh
@@ -399,7 +447,8 @@ The value of 'am' key is: frameworks/base/services/core/java/com/android/server/
 The key of 'a|adb logcat -b' is: a
 ```
 
-可以看到，在 `testparsecfg.sh` 脚本中通过 `source` 命令引入 `parsecfg.sh` 脚本.  
+可以看到，在 `testparsecfg.sh` 脚本中通过 `source` 命令引入 `parsecfg.sh` 脚本.
+
 之后可以调用 `parsecfg.sh` 脚本里面的代码来解析配置文件，非常方便。
 
 如果多个脚本需要解析多个不同的配置文件，可以在各自脚本中引入 `parsecfg.sh` 脚本，然后提供不同的配置文件名即可。

@@ -2,17 +2,22 @@
 
 # 定义函数的两种格式
 在 bash 中，定义函数时，*function* 关键字是可选的，查看man bash手册，里面提到定义函数的两种格式如下：
-> name () compound-command [redirection]  
-function name [()] compound-command [redirection]
+> name () compound-command [redirection]
+>
+> function name [()] compound-command [redirection]
 
 从中可以看到，当不写 *function* 关键字时，函数名后面一定要跟着小括号`()`，而写了 *function* 关键字时，小括号是可选的。
 
 关于 compound-command 的说明，同样可以查看 man bash 手册，里面提到下面几种形式：
-> A compound command is one of the following:  
-**(list)** list is executed in a subshell environment. Variable assignments and builtin commands that affect the shell's environment do not remain in effect after the command completes. The return status is the exit status of list.  
-**{ list; }** list is simply executed in the current shell environment. list must be terminated with a newline or semicolon. The return status is the exit status of list.
+> A compound command is one of the following:
+>
+> **(list)** list is executed in a subshell environment. Variable assignments and builtin commands that affect the shell's environment do not remain in effect after the command completes. The return status is the exit status of list.
+>
+> **{ list; }** list is simply executed in the current shell environment. list must be terminated with a newline or semicolon. The return status is the exit status of list.
 
-常见的是 `{ list; }` 这种形式，但是写为 `(list)` 也可以。举例如下：
+常见的是 `{ list; }` 这种形式，但是写为 `(list)` 也可以。
+
+举例说明如下：
 ```bash
 $ testpwd() (pwd)
 $ testpwd
@@ -24,9 +29,15 @@ $ testpwd() (pwd;)
 $ testpwd
 /home/sample/
 ```
-这里定义了一个 *testpwd* 函数，它自身的代码是用小括号`()`括起来的 *pwd* 命令，这个命令跟 `()` 之间可以有空格，也可以没有空格。在命令后可以加分号，也可以不加分号。
+这里定义了一个 *testpwd* 函数，它自身的代码是用小括号`()`括起来的 *pwd* 命令，这个命令跟 `()` 之间可以有空格，也可以没有空格。
 
-**注意**：使用 `{ list; }` 这个写法时，在 list 后面一定要跟着分号';'，否则会报错。而且 `list;` 和左边的大括号 `{` 之间要有空格。如果写为 `{list;}` 会报错，而 `{ list;}` 不会报错，建议还是写为 `{ list; }` 的形式。举例如下：
+在命令后可以加分号，也可以不加分号。
+
+**注意**：使用 `{ list; }` 这个写法时，在 list 后面一定要跟着分号';'，否则会报错。而且 `list;` 和左边的大括号 `{` 之间要有空格。
+
+如果写为 `{list;}` 会报错，而 `{ list;}` 不会报错，建议还是写为 `{ list; }` 的形式。
+
+举例说明如下：
 ```bash
 $ lsfunc() {ls}
 -bash: syntax error near unexpected token `{ls}'
@@ -39,9 +50,12 @@ hello.c
 
 **调用 bash shell 的函数时，不需要写小括号`()`，只写函数名即可**。
 
-例如执行上面的 lsfunc() 函数，直接写 `lsfunc` 就可以。如果写成 `lsfunc()` 反而变成重新定义这个函数。
+例如执行上面的 lsfunc() 函数，直接写 `lsfunc` 就可以。
 
-在函数名后面可以提供要传入的参数列表，不同参数之间用空格隔开。  
+如果写成 `lsfunc()` 反而变成重新定义这个函数。
+
+在函数名后面可以提供要传入的参数列表，不同参数之间用空格隔开。
+
 如果某个参数需要带有空格，要用引号把该参数括起来。
 
 # 从函数中返回内容
@@ -49,10 +63,12 @@ Bash 要求函数的返回值必须为一个整数，不能用 *return* 语句�
 
 一般来说，该整数返回值为 0，表示函数执行成功，非0 表示执行失败。
 
-在自定义的函数里面，执行 *return* 语句会退出函数，不会退出整个脚本。  
+在自定义的函数里面，执行 *return* 语句会退出函数，不会退出整个脚本。
+
 在函数里面执行 *exit* 语句则会退出整个脚本，而不是只退出函数。
 
-由于在函数内部用 *return* 返回，只能返回整数。  
+由于在函数内部用 *return* 返回，只能返回整数。
+
 如果想从函数内部把字符串传递到函数之外，可以用 *echo* 命令来实现，就是在函数内部打印字符串，然后调用者获取标准输出获取到打印的字符串。
 
 具体举例如下：
@@ -80,8 +96,10 @@ second: foo
 $ var=$(foobar); echo third: ${var}
 third:
 ```
-可以看到， *foo* 函数将字符串写到标准输出，`var=$(foo);` 语句把 *foo* 函数的标准输出赋值给 var 变量，打印 var 变量的值是 "foo"。  
-bar() 函数调用了 *foo* 函数，但是没有读取 *foo* 函数打印的标准输出，则这个标准输出会被 *bar* 函数继承，就好象这个标准输出是由 *bar* 函数输出一样，`var=$(bar);` 语句也会把 var 变量赋值为 "foo"。  
+可以看到， *foo* 函数将字符串写到标准输出，`var=$(foo);` 语句把 *foo* 函数的标准输出赋值给 var 变量，打印 var 变量的值是 "foo"。
+
+bar() 函数调用了 *foo* 函数，但是没有读取 *foo* 函数打印的标准输出，则这个标准输出会被 *bar* 函数继承，就好象这个标准输出是由 *bar* 函数输出一样，`var=$(bar);` 语句也会把 var 变量赋值为 "foo"。
+
 而 *foobar* 函数读取了 *foo* 函数的标准输出，*foobar* 函数自身没有用 *echo* 命令来输出内容，此时再通过 `$(foobar)` 来获取该函数的输出，会获取到空，因为 *foo* 函数中的标准输出给 *foobar* 读走了。
 
 **注意**：这种在函数内部通过 *echo* 命令输出字符串的做法有个缺陷，就是不能再在函数里面执行 *echo* 语句来打印调试信息，这些调试信息会被函数外的语句一起读取到，有用的结果和调试信息都混在一起，如果函数外的语句没有打印这些结果，就会看不到调试信息。
@@ -93,7 +111,8 @@ if [ "$?" == "0" ]; then
     echo success
 fi
 ```
-此时，不要在 `var=$(foo)` 和 `if [ "$?" == "0" ]; then` 之间添加任何语句。  
+此时，不要在 `var=$(foo)` 和 `if [ "$?" == "0" ]; then` 之间添加任何语句。
+
 否则，`$?` 获取到将不是 `$(foo)` 的 return 值，判断就有问题，特别是不要添加 echo 调试语句。
 
 换句话来说，这种先执行一个语句，再判断 `$?` 的方法不是很可靠，会受到各种影响，要特别注意代码语句的顺序。
@@ -146,7 +165,8 @@ after execute the cd_to_root, pwd is: /usr
 [~/sample]$ pwd
 /home/sample
 ```
-可以看到，如果在函数里面执行过 *cd* 命令，函数退出后，当前工作目录还是 *cd* 后的目录。  
+可以看到，如果在函数里面执行过 *cd* 命令，函数退出后，当前工作目录还是 *cd* 后的目录。
+
 但是脚本执行结束后，当前 shell 的工作目录还是之前的工作目录，不是脚本里面 *cd* 后的目录。  
 
 在每个 shell 下面，当前工作目录 (working directory ) 是全局的状态，一旦改变，在整个 shell 里面都会改变。
@@ -154,21 +174,30 @@ after execute the cd_to_root, pwd is: /usr
 而 bash 执行脚本时，是启动一个新的子 shell 来执行，所以脚本内部执行 *cd* 命令，会影响运行这个脚本的子 shell 的工作目录，但不影响原先父 shell 的工作目录。
 
 # 声明函数内的变量为局部变量
-在 bash 中，没有使用 `local` 命令来声明的变量都是全局变量，在函数内部定义的变量也是全局变量。  
+在 bash 中，没有使用 `local` 命令来声明的变量都是全局变量，在函数内部定义的变量也是全局变量。
+
 如果没有注意到这一点，在函数内操作变量可能会影响到的外部同名变量，造成不预期的结果。
 
-为了避免对外部同名变量造成影响，函数内的变量最好声明为局部变量，使用 `local` 命令来声明。查看 man bash 里面对 `local` 命令的说明如下：
-> **local [option] [name[=value] ...]**  
-> For each argument, a local variable named name is created, and assigned value. The option can be any of the options accepted by declare.   
-> When local is used within a function, it causes the variable name to have a visible scope restricted to that function and its children. With no operands, local writes a list of local variables to the standard output.  
-> It is an error to use local when not within a function.  
+为了避免对外部同名变量造成影响，函数内的变量最好声明为局部变量，使用 `local` 命令来声明。
+
+查看 man bash 里面对 `local` 命令的说明如下：
+> **local [option] [name[=value] ...]**
+>
+> For each argument, a local variable named name is created, and assigned value. The option can be any of the options accepted by declare.
+> 
+> When local is used within a function, it causes the variable name to have a visible scope restricted to that function and its children. With no operands, local writes a list of local variables to the standard output.
+>
+> It is an error to use local when not within a function.
+>
 > The return status is 0 unless local is used outside a function, an invalid name is supplied, or name is a readonly variable.
 
 即，在函数内，使用 local 命令声明的变量是局部变量，这些变量在函数外不可见。
 
 **在函数外，不能使用 local 命令声明变量，否则会报错**。
 
-**注意**：如上面说明，`local` 命令本身会返回一个值，正常的返回值是 0。假设有个 `testlocal.sh` 脚本，内容如下：
+**注意**：如上面说明，`local` 命令本身会返回一个值，正常的返回值是 0。
+
+假设有个 `testlocal.sh` 脚本，内容如下：
 ```bash
 #!/bin/bash
 
@@ -190,25 +219,32 @@ third: 1
 ```
 可以看到，`ret=$(foo);` 语句没有使用 local 命令来定义 ret 变量，执行 *foo* 函数，该函数的返回值是 1，所以得到的 `$?` 是 1。
 
-而 `local var=$(foo);` 语句使用 local 命令来定义 var 变量，执行 *foo* 函数，得到的 `$?` 却是 0，而*foo* 函数明明返回的是 1。  
+而 `local var=$(foo);` 语句使用 local 命令来定义 var 变量，执行 *foo* 函数，得到的 `$?` 却是 0，而*foo* 函数明明返回的是 1。
+
 原因就是该语句先通过 `$(foo)` 执行 *foo* 函数，然后用 `local var` 来定义 var 变量为局部变量，所以该语句对应的 `$?` 是 local 命令的返回值，而不是 *foo* 函数的返回值。
 
 当在函数外执行 local 命令时，它会报错，可以看到虽然 *foobar* 函数返回是 0，但是第三个 echo 语句打印的 `$?`是 1，正好是 local 命令执行出错时的返回值。
 
-即，对于 `local var=$(func);` 这种语句来说，它对应的 `$?` 不是所调用函数的返回值，而是local 命令的返回值。  
+即，对于 `local var=$(func);` 这种语句来说，它对应的 `$?` 不是所调用函数的返回值，而是local 命令的返回值。
+
 所以执行函数后，想用 `$?` 来判断函数的 return 返回值时，注意不要用这种写法。
 
-为了避免这种情况，最好在函数开头就用 local 命令声明所有局部变量。  
-使用 local 声明多个变量时，变量之间用空格隔开，不要加逗号。举例如下：
+为了避免这种情况，最好在函数开头就用 local 命令声明所有局部变量。
+
+使用 local 声明多个变量时，变量之间用空格隔开，不要加逗号。
+
+举例说明如下：
 ```
 local a b c;
 ```
 
 # 获取传入函数的所有参数
-在 bash 中，可以使用 `$1`、`$2`、`$3`、...、`$n` 的方式来引用传入函数的参数，`$1` 对应第一个参数值，`$2` 对应第二个参数值，依次类推。  
+在 bash 中，可以使用 `$1`、`$2`、`$3`、...、`$n` 的方式来引用传入函数的参数，`$1` 对应第一个参数值，`$2` 对应第二个参数值，依次类推。
+
 如果 n 的值大于 9，那么需要用大括号`{}`把 n 括起来。
 
-例如，`${10}` 表示获取第 10 个参数的值，写为 `$10` 获取不到第 10 个参数的值。  
+例如，`${10}` 表示获取第 10 个参数的值，写为 `$10` 获取不到第 10 个参数的值。
+
 实际上，`$10` 相当于 `${1}0`，也就是先获取 `$1` 的值，后面再跟上 0，如果 `$1` 的值是 "first"，则 `$10` 的值是 "first0"。
 
 下面通过一个 `testparams.sh` 脚本来举例说明，该脚本的内容如下：
@@ -229,26 +265,35 @@ show_params $@
 $ ./testparams.sh 1a 2b 3c 4d 5e 6f 7g 8h 9i 10j 11k
 1a , 2b , 3c , 4d , 5e , 6f , 7g , 8h , 9i , 1a0 , 10j , 11k
 ```
-可以看到，传入的第 10 个参数值是 "10j"，而 `$10` 打印出来的结果是 "1a0"，也就是第一个参数 "1a" 后面再跟上 0。  
+可以看到，传入的第 10 个参数值是 "10j"，而 `$10` 打印出来的结果是 "1a0"，也就是第一个参数 "1a" 后面再跟上 0。
+
 `${10}` 打印的结果才是第 10 个参数的值。
 
 相应地，`${11}` 也能正确打印第 11 个参数的值。
 
-`$1`、`$2` 这种写法在 bash 文档里面称之为 *positional  parameter*，中文直译过来是 “位置参数”。  
-查看 man bash 里面的说明如下：
-> **Positional Parameters**  
-> A  positional  parameter  is  a  parameter  denoted by one or more digits, other than the single digit 0.  Positional parameters are assigned from the shell's arguments when it is invoked, and may be reassigned using the set builtin command.   
-> Positional parameters may not be assigned to with assignment statements.  The positional parameters are temporarily replaced when a shell function is executed.  
-> When a positional parameter consisting of more than a single digit is expanded, it must be enclosed in braces.
+`$1`、`$2` 这种写法在 bash 文档里面称之为 *positional  parameter*，中文直译过来是 “位置参数”。
 
-> **${parameter}**  
-> The value of parameter is substituted.   
-> The braces are required when parameter is a positional parameter with more than one digit, or when parameter is followed by a character which is not to be interpreted as part of its name.   
+查看 man bash 里面的说明如下：
+> **Positional Parameters**
+>
+> A  positional  parameter  is  a  parameter  denoted by one or more digits, other than the single digit 0.  Positional parameters are assigned from the shell's arguments when it is invoked, and may be reassigned using the set builtin command.
+>
+> Positional parameters may not be assigned to with assignment statements.  The positional parameters are temporarily replaced when a shell function is executed.
+>
+> When a positional parameter consisting of more than a single digit is expanded, it must be enclosed in braces.
+>
+> **${parameter}**
+>
+> The value of parameter is substituted.
+>
+> The braces are required when parameter is a positional parameter with more than one digit, or when parameter is followed by a character which is not to be interpreted as part of its name.
+>
 > The parameter is a shell parameter or an array reference (Arrays).
 
 可以看到，这里面提到了需要用大括号`{}`把大于9的数字括起来，`{}` 的作用是限定大括号里面的字符串是一个整体。
 
-例如，有一个 var 变量值是 "Test"，现在想打印这个变量值，并跟着打印 "Hello" 字符串，也就是打印出来 "TestHello" 字符串，那么获取 var 变量值的语句和 "Hello" 字符串中间就不能有空格，否则 *echo* 命令会把这个空格一起打印出来，但是写为 `$varHello` 达不到想要的效果。  
+例如，有一个 var 变量值是 "Test"，现在想打印这个变量值，并跟着打印 "Hello" 字符串，也就是打印出来 "TestHello" 字符串，那么获取 var 变量值的语句和 "Hello" 字符串中间就不能有空格，否则 *echo* 命令会把这个空格一起打印出来，但是写为 `$varHello` 达不到想要的效果。
+
 具体举例如下：
 ```bash
 $ var="Test"
@@ -265,13 +310,17 @@ TestHello
 
 `${var}Hello` 打印出了想要的结果，用大括号 `{}` 把 var 括起来，明确指定要获取的变量名是 var，避免混淆。
 
-上面贴出的 `testparams.sh` 脚本代码里面还用到了一个 `$@` 特殊参数，它会扩展为 *positional  parameter* 自身的列表。  
+上面贴出的 `testparams.sh` 脚本代码里面还用到了一个 `$@` 特殊参数，它会扩展为 *positional  parameter* 自身的列表。
+
 查看 man bash 的说明如下：
-> **Special Parameters**  
-> **@**      Expands  to the positional parameters, starting from one.  When the expansion occurs within double quotes, each parameter expands to a separate word.   
+> **Special Parameters**
+>
+> **@**      Expands  to the positional parameters, starting from one.  When the expansion occurs within double quotes, each parameter expands to a separate word.
+>
 > That is, "$@" is equivalent to "$1" "$2" ...
 
-**注意**：`$@` 和 `"$@"` 这两种写法得到的结果可能会有所不同。`$@` 是扩展为 `$1` `$2` ...，而 `"$@"` 是扩展为 `"$1"` `"$2"` ...  
+**注意**：`$@` 和 `"$@"` 这两种写法得到的结果可能会有所不同。`$@` 是扩展为 `$1` `$2` ...，而 `"$@"` 是扩展为 `"$1"` `"$2"` ...
+
 修改上面的 `testparams.sh` 脚本来举例说明 `$@` 和 `"$@"` 的区别：
 ```bash
 #!/bin/bash
@@ -302,7 +351,8 @@ $ ./testparams.sh 1a 2b
 
 上面的 `$1` 是 "1 a"，`$@` 会拆分成 "1" "2" 两个参数，然后传给 *show_params* 函数；`"$@"` 会保持为 "1 a" 不变，然后传给 *show_params* 函数。
 
-即，`"1 a" "2 b" "3 c"` 这三个参数，经过 `$@` 处理后，得到的是 `"1" "a" "2" "b" "3" "c"`  六个参数。  
+即，`"1 a" "2 b" "3 c"` 这三个参数，经过 `$@` 处理后，得到的是 `"1" "a" "2" "b" "3" "c"`  六个参数。
+
 经过 `"$@"` 处理后，得到的还是 `"1 a" "2 b" "3 c"` 三个参数。
 
 同时也看到，即使只传入两个参数，引用 `$3` 也不会报错，只是会获取为空。

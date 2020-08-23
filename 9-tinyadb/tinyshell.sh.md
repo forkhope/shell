@@ -1,30 +1,44 @@
 # 介绍一个可以通过命令简写执行对应命令的 shell 脚本
 
-本篇文章介绍一个可以通过命令简写执行对应命令的 shell 脚本。  
+本篇文章介绍一个可以通过命令简写执行对应命令的 shell 脚本。
+
 假设这个 shell 脚本的名称为 `tinyshell.sh`。
 
-在 Linux 下进行项目开发，经常会用到一些调试开发命令。  
-这些命令可能比较长，需要输入多个字符。  
-例如，Android 系统抓取全部 log 并包含 log 时间的命令是 *adb logcat -b all -v threadtime*。  
+在 Linux 下进行项目开发，经常会用到一些调试开发命令。
+
+这些命令可能比较长，需要输入多个字符。
+
+例如，Android 系统抓取全部 log 并包含 log 时间的命令是 *adb logcat -b all -v threadtime*。
+
 抓取 log 是调试开发非常常见的操作，这个命令又很长，输入起来不方便。
 
-为了简化输入，可以配置一些命令简写来对应比较长命令。  
-例如，配置 *ala* 对应 *adb logcat -b all -v threadtime*。  
-把 *als* 作为参数传递给当前的 `tinyshell.sh` 脚本，会执行该命令简写对应的命令。  
+为了简化输入，可以配置一些命令简写来对应比较长命令。
+
+例如，配置 *ala* 对应 *adb logcat -b all -v threadtime*。
+
+把 *als* 作为参数传递给当前的 `tinyshell.sh` 脚本，会执行该命令简写对应的命令。
+
 这样只需要输入比较少的字符，就能执行比较长的命令。
 
-实际上，这个功能类似于 bash 的 `alias` 别名，只是将这些别名统一放到该脚本来处理。  
+实际上，这个功能类似于 bash 的 `alias` 别名，只是将这些别名统一放到该脚本来处理。
+
 可以把 `tinyshell.sh` 脚本作为学习 shell 脚本的参考例子，独立维护更新，根据需要扩充更多的功能。
 
 # 配置命令简写
-如之前说明，可以用 *ala* 表示 *adb logcat -b all -v threadtime* 这个命令。  
-这个 *ala* 称之为 “命令简写”。  
-命令简写使用一些简单的字符来表示特定的命令。  
+如之前说明，可以用 *ala* 表示 *adb logcat -b all -v threadtime* 这个命令。
+
+这个 *ala* 称之为 “命令简写”。
+
+命令简写使用一些简单的字符来表示特定的命令。
+
 可以在命令简写后面动态提供命令的参数。
 
-为了方便动态添加、删除、查询命令简写，可以把这些命令简写保存在一个配置文件里面。  
-在执行 `tinyshell.sh` 脚本时，会读取配置文件内容，获取到各个配置项的值。  
-配置项的基本格式是：命令简写|命令内容  
+为了方便动态添加、删除、查询命令简写，可以把这些命令简写保存在一个配置文件里面。
+
+在执行 `tinyshell.sh` 脚本时，会读取配置文件内容，获取到各个配置项的值。
+
+配置项的基本格式是：命令简写|命令内容
+
 每个配置项占据一行。每一行默认以第一个竖线 ‘|’ 隔开命令简写和命令内容。
 
 一个参考的配置文件内容如下所示：
@@ -37,14 +51,17 @@ gp|git pull --stat --no-tags $(git remote) $(git rev-parse --abbrev-ref HEAD)
 
 这里配置的命令内容可以是系统支持的任意命令。  
 
-解析配置文件时，需要用到之前文章介绍的 `parsecfg.sh` 脚本。  
+解析配置文件时，需要用到之前文章介绍的 `parsecfg.sh` 脚本。
+
 要获取 `parsecfg.sh` 脚本的代码，可以查看之前的文章。
 
 后面会提供具体测试的例子，可供参考。
 
 # 脚本代码
-列出 `tinyshell.sh` 脚本的具体代码如下所示。  
-在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。  
+列出 `tinyshell.sh` 脚本的具体代码如下所示。
+
+在这个代码中，对大部分关键代码都提供了详细的注释，方便阅读。
+
 这篇文章的后面也会对一些关键点进行说明，有助理解。
 
 ```bash
@@ -324,26 +341,38 @@ exit
 # 代码关键点说明
 
 ## 使用 trap 命令捕获信号
-在 bash 中，可以使用 `trap` 命令捕获信号，并指定信号处理函数。  
+在 bash 中，可以使用 `trap` 命令捕获信号，并指定信号处理函数。
+
 捕获信号后，可以避免收到某个信号终止脚本执行。
 
-当前 `tinyshell.sh` 脚本使用 `trap` 命令捕获 SIGINT 信号。  
+当前 `tinyshell.sh` 脚本使用 `trap` 命令捕获 SIGINT 信号。
+
 也就是 CTRL-C 键所发送的信号，避免按 CTRL-C 键会退出当前 tiny shell。
 
 要注意的是，不能设置成忽略 SIGINT 信号。
 
-在 bash 中，父 shell 所忽略的信号，也会被子 shell 所忽略。  
-除了内置命令之外，当前 tiny shell 所执行的命令运行在子 shell 下。  
-如果设置成忽略 SIGINT 信号，那么子 shell 也会忽略这个信号。  
-那么就不能用 CTRL-C 来终止子 shell 命令的执行。  
-例如，Android 系统的 `adb logcat` 命令会不停打印 log，需要按 CTRL-C 来终止。  
+在 bash 中，父 shell 所忽略的信号，也会被子 shell 所忽略。
+
+除了内置命令之外，当前 tiny shell 所执行的命令运行在子 shell 下。
+
+如果设置成忽略 SIGINT 信号，那么子 shell 也会忽略这个信号。
+
+那么就不能用 CTRL-C 来终止子 shell 命令的执行。
+
+例如，Android 系统的 `adb logcat` 命令会不停打印 log，需要按 CTRL-C 来终止。
+
 此时，在 tiny shell 里面按 CTRL-C 就不能终止 `adb logcat` 的执行。
 
-父 shell 所捕获的信号，子 shell 不会继承父 shell 所捕获的信号。  
-子 shell 会继承父 shell 的父进程的信号状态。  
-父 shell 的父进程一般是外部 bash shell 进程。  
-而 bash shell 进程默认捕获SIGINT并终止前台进程。  
-即，虽然当前 tiny shell 捕获了 SIGINT 信号，但是子 shell 并没有捕获该信号。  
+父 shell 所捕获的信号，子 shell 不会继承父 shell 所捕获的信号。
+
+子 shell 会继承父 shell 的父进程的信号状态。
+
+父 shell 的父进程一般是外部 bash shell 进程。
+
+而 bash shell 进程默认捕获SIGINT并终止前台进程。
+
+即，虽然当前 tiny shell 捕获了 SIGINT 信号，但是子 shell 并没有捕获该信号。
+
 可以在 tiny shell 使用 CTRL-C 来终止子 shell 命令的执行。
 
 ## 使用 history -s 命令添加历史记录
@@ -351,23 +380,33 @@ exit
 
 为了可以查找到 tiny shell 自身执行的历史命令，使用 `history -s` 命令添加命令到当前 shell 的历史记录。
 
-这个命令只会影响当前 shell 的历史记录。  
-退出当前 shell 后，在外部 shell 还是看不到 tiny shell 所执行的命令。  
-由于这个 tiny shell 主要是为了执行命令简写。  
+这个命令只会影响当前 shell 的历史记录。
+
+退出当前 shell 后，在外部 shell 还是看不到 tiny shell 所执行的命令。
+
+由于这个 tiny shell 主要是为了执行命令简写。
+
 这些命令简写只有 tiny shell 自身支持，不需要添加到 bash shell 的历史记录。
 
 如果想要命令历史信息添加到外部 shell 的历史记录，可以在退出 `tinyshell.sh` 脚本之前，执行 `history -w ~/.bash_history` 命令把历史记录写入到 bash 自身的历史记录文件。
 
 # 测试例子
-把 `tinyshell.sh` 脚本放到 PATH 变量指定的可寻址目录下。  
-查看 `tinyshell.sh` 脚本代码，可知要解析的配置文件名是 tinyshellcmds.txt。  
-把前面贴出的命令简写配置信息写入 tinyshellcmds.txt 文件。  
-把这个文件放到 HOME 目录的 .liconfig 目录下。  
+把 `tinyshell.sh` 脚本放到 PATH 变量指定的可寻址目录下。
+
+查看 `tinyshell.sh` 脚本代码，可知要解析的配置文件名是 tinyshellcmds.txt。
+
+把前面贴出的命令简写配置信息写入 tinyshellcmds.txt 文件。
+
+把这个文件放到 HOME 目录的 .liconfig 目录下。
+
 之后，就可以开始执行 `tinyshell.sh` 脚本。
 
-当前的 `tinyshell.sh` 脚本可以执行内置命令、命令简写对应的命令、系统自身支持的命令。  
-当不提供任何命令参数时，会进入 tiny shell。  
-在 tiny shell 中，会不停接收用户输入并执行对应命令。  
+当前的 `tinyshell.sh` 脚本可以执行内置命令、命令简写对应的命令、系统自身支持的命令。
+
+当不提供任何命令参数时，会进入 tiny shell。
+
+在 tiny shell 中，会不停接收用户输入并执行对应命令。
+
 直到读取到 EOF 、或者执行 quit 命令才会退出 tiny shell。
 
 ## 处理选项参数和直接处理命令简写的例子
@@ -384,19 +423,24 @@ $ tinyshell.sh ll
 命令简写: ll. 命令: ls --color=auto -l
 ```
 
-这里先执行 `tinyshell.sh -v` 命令，用键值对的形式列出支持的命令简写。  
+这里先执行 `tinyshell.sh -v` 命令，用键值对的形式列出支持的命令简写。
+
 此时，只处理所给的选项参数，不会进入 tiny shell 里面。
 
-`tinyshell.sh ll` 命令，提供了一个 *ll* 参数（两个小写字母 l）。  
-这个参数会被当成命令简写，然后执行该命令简写对应的命令。  
+`tinyshell.sh ll` 命令，提供了一个 *ll* 参数（两个小写字母 l）。
+
+这个参数会被当成命令简写，然后执行该命令简写对应的命令。
+
 执行结束后，不会进入 tiny shell 里面。
 
-基于刚才列出的命令简写，可知 *ll* 对应 *ls --color=auto -l* 命令。  
+基于刚才列出的命令简写，可知 *ll* 对应 *ls --color=auto -l* 命令。
+
 实际执行的也是这个命令。
 
 ## 进入 tiny shell 循环处理命令的例子
 
-当不提供任何命令参数时，会进入 tiny shell 里面，循环处理命令。  
+当不提供任何命令参数时，会进入 tiny shell 里面，循环处理命令。
+
 具体例子如下所示：
 ```
 $ tinyshell.sh
@@ -430,16 +474,24 @@ tinyshell.sh
 
 在 tiny shell 中执行 *help* 命令可以查看支持的内置命令和命令简写。
 
-在 tiny shell 中执行 *date* 命令打印当前的日期和时间。  
-当前的 tiny shell 自身不支持 *date* 命令。  
+在 tiny shell 中执行 *date* 命令打印当前的日期和时间。
+
+当前的 tiny shell 自身不支持 *date* 命令。
+
 这里执行了系统自身的 *date* 命令。
 
-最后执行 *ll -C* 命令。  
-这里的 *ll* 是命令简写。后面的 *-C* 是对应命令的参数。  
-具体执行的命令是 *ls --color=auto -l -C*。  
-`ls` 命令的 -C 选项会多列显示文件名，覆盖了 -l 选项的效果。  
-由于 -l 选项的效果被覆盖，输出结果没有打印文件的详细信息，只列出文件名。  
+最后执行 *ll -C* 命令。
+
+这里的 *ll* 是命令简写。后面的 *-C* 是对应命令的参数。
+
+具体执行的命令是 *ls --color=auto -l -C*。
+
+`ls` 命令的 -C 选项会多列显示文件名，覆盖了 -l 选项的效果。
+
+由于 -l 选项的效果被覆盖，输出结果没有打印文件的详细信息，只列出文件名。
+
 可以看到，在命令简写之后，可以再提供其他的命令参数。
 
-即，可以只配置比较长的命令前缀部分，一些简单的参数可以动态提供。  
+即，可以只配置比较长的命令前缀部分，一些简单的参数可以动态提供。
+
 不需要在配置文件中添加很多内容相似、只有细微差异的配置项。
